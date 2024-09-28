@@ -17,7 +17,6 @@ import (
 	"github.com/pion/webrtc/v4"
 )
 
-
 type ConfRoom struct {
 	Name                   string
 	PubPC                  *webrtc.PeerConnection
@@ -42,6 +41,7 @@ func main() {
 	http.HandleFunc("/ws", HandleWebSocket)
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
+	http.HandleFunc("/api/conf", HandlePostConf) // New POST endpoint
 
 	// 启动 HTTP 服务器
 	go func() {
@@ -53,9 +53,9 @@ func main() {
 	go func() {
 		log.Printf("Starting HTTPS server at %s\n", httpsPort)
 		certFile := "./blinder.aiiyou.cn/fullchain.pem" // 替换为你的证书路径
-		keyFile := "./blinder.aiiyou.cn/privkey.pem"   // 替换为你的私钥路径
+		keyFile := "./blinder.aiiyou.cn/privkey.pem"    // 替换为你的私钥路径
 		tlsConfig := &tls.Config{
-			MinVersion: tls.VersionTLS12,
+			MinVersion: tls.VersionTLS10,
 		}
 		srv := &http.Server{
 			Addr:      httpsPort,
@@ -66,6 +66,67 @@ func main() {
 	}()
 
 	select {} // 阻止主 goroutine 退出
+}
+
+// HandlePostConf processes HTTP POST requests for creating or joining a conference room.
+func HandlePostConf(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var msg map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	msgCmd := msg["cmd"].(string)
+
+	switch msgCmd {
+	case "create":
+		roomName := msg["roomName"].(string)
+		if len(roomName) == 0 {
+			http.Error(w, "Invalid room name", http.StatusBadRequest)
+			return
+		}
+		createdRoom, err := CreateConfRoom(roomName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		answerSdp, err := HandlePubOffer(msg["sdp"].(string), createdRoom)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		jsonData, _ := json.Marshal(map[string]string{"answer": answerSdp, "type": "answer"})
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
+
+	case "join":
+		roomName := msg["roomName"].(string)
+		if len(roomName) == 0 {
+			http.Error(w, "Invalid room name", http.StatusBadRequest)
+			return
+		}
+		joinRoom, exists := ConfRoomList[roomName]
+		if !exists {
+			http.Error(w, "Room does not exist", http.StatusNotFound)
+			return
+		}
+		answerSdp, err := HandleSubOffer(msg["sdp"].(string), joinRoom)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		jsonData, _ := json.Marshal(map[string]string{"answer": answerSdp, "type": "answer"})
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
+
+	default:
+		http.Error(w, "Invalid command", http.StatusBadRequest)
+	}
 }
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -203,9 +264,8 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		}
 	})
 
-
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
-		if is ==  webrtc.ICEConnectionStateDisconnected || is ==  webrtc.ICEConnectionStateFailed{
+		if is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateFailed {
 			logger.Warn("peerConnection will be close")
 			peerConnection.Close()
 		}
