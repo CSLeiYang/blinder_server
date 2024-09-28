@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -16,9 +17,6 @@ import (
 	"github.com/pion/webrtc/v4"
 )
 
-const (
-	webPort = ":8090"
-)
 
 type ConfRoom struct {
 	Name                   string
@@ -37,13 +35,37 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
+var webPort = ":9000"
+var httpsPort = ":9443"
 
 func main() {
 	http.HandleFunc("/ws", HandleWebSocket)
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
-	log.Printf("Starting server at %s\n", webPort)
-	log.Fatal(http.ListenAndServe(webPort, nil))
+
+	// 启动 HTTP 服务器
+	go func() {
+		log.Printf("Starting HTTP server at %s\n", webPort)
+		log.Fatal(http.ListenAndServe(webPort, nil))
+	}()
+
+	// 启动 HTTPS 服务器
+	go func() {
+		log.Printf("Starting HTTPS server at %s\n", httpsPort)
+		certFile := "./blinder.aiiyou.cn/fullchain.pem" // 替换为你的证书路径
+		keyFile := "./blinder.aiiyou.cn/privkey.pem"   // 替换为你的私钥路径
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+		srv := &http.Server{
+			Addr:      httpsPort,
+			Handler:   nil,
+			TLSConfig: tlsConfig,
+		}
+		log.Fatal(srv.ListenAndServeTLS(certFile, keyFile))
+	}()
+
+	select {} // 阻止主 goroutine 退出
 }
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
