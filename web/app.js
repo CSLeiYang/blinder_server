@@ -21,7 +21,7 @@ async function joinSession() {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
@@ -80,6 +80,8 @@ async function joinSession() {
                 break;
         }
     };
+
+    localStream.getVideoTracks().forEach(track => track.enabled = false);
 }
 
 
