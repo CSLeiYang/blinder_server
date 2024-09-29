@@ -19,6 +19,13 @@ body {
     flex-wrap: wrap;
 }
 
+#remoteVideos{
+ display: flex;
+ flex-direction: column; 
+ justify-content: center;
+ align-items: center;  
+}
+
 #controls {
     margin-top: 20px;
 }

@@ -1,6 +1,6 @@
 document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
-document.getElementById('video-btn').addEventListener('click', toggleVideo);
+// document.getElementById('video-btn').addEventListener('click', toggleVideo);
 
 let localStream;
 let peerConnection;
@@ -21,7 +21,7 @@ async function joinSession() {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
@@ -61,11 +61,11 @@ async function joinSession() {
     };
 
     // Show video
-    const localVideo = document.createElement('video');
-    localVideo.srcObject = localStream;
-    localVideo.autoplay = true;
-    localVideo.muted = true;
-    document.getElementById('videos').appendChild(localVideo);
+    // const localVideo = document.createElement('video');
+    // localVideo.srcObject = localStream;
+    // localVideo.autoplay = true;
+    // localVideo.muted = true;
+    // document.getElementById('videos').appendChild(localVideo);
 
     ws.onmessage = async (event) => {
         const jsonObject = JSON.parse(event.data);
