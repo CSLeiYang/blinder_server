@@ -296,6 +296,11 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	})
 
 	//Video track
+	if confRoom==nil || confRoom.PubRemoteVideoTrack==nil {
+		logger.Error("PubRemoteVideoTrack is nil")
+		return "", errors.New("PubRemoteVideoTrack is nil")
+		
+	}
 	localVideoTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(confRoom.PubRemoteVideoTrack.Codec().RTPCodecCapability, "video", "pion")
 	if newTrackErr != nil {
 		logger.Error(newTrackErr)
