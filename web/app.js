@@ -132,4 +132,5 @@ function toggleMute() {
     document.getElementById('mute-btn').textContent = isMuted ? 'Unmute' : 'Mute';
 }
 
+getConfInfo()
 

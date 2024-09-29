@@ -493,6 +493,13 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	})
 
+	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
+		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
+			peerConnection.Close()
+			delete(ConfRoomList,confRoom.Name)
+		}
+	})
+
 	// Set the remote SessionDescription
 	err = peerConnection.SetRemoteDescription(offerSD)
 	if err != nil {
