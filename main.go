@@ -23,8 +23,8 @@ type ConfRoom struct {
 	PubRemoteVideoTrack    *webrtc.TrackRemote
 	PubRemoteAudioTrack    *webrtc.TrackRemote
 	PubLocalAudioTrack     *webrtc.TrackLocalStaticRTP
-	SubLocalVideoTrackList []*webrtc.TrackLocalStaticRTP
-	SublocalAudioTrackList []*webrtc.TrackLocalStaticRTP
+	SubLocalVideoTrackList map[string]*webrtc.TrackLocalStaticRTP
+	SublocalAudioTrackList map[string]*webrtc.TrackLocalStaticRTP
 	CreatedAt              time.Time
 }
 
@@ -139,7 +139,7 @@ func HandlePostConf(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Room does not exist", http.StatusNotFound)
 			return
 		}
-		answerSdp, err := HandleSubOffer(msg["sdp"].(string), joinRoom)
+		answerSdp, err := HandleSubOffer(msg["userId"].(string), msg["sdp"].(string), joinRoom)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -218,7 +218,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			answerSdp, err := HandleSubOffer(msg["sdp"].(string), joinRoom)
+			answerSdp, err := HandleSubOffer(msg["userId"].(string), msg["sdp"].(string), joinRoom)
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -242,7 +242,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
+func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, error) {
 	logger.Info("handleSubOffer comming...")
 	recvOnlyOffer := webrtc.SessionDescription{}
 	err := decode(offer, &recvOnlyOffer)
@@ -291,6 +291,8 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateFailed {
 			logger.Warn("peerConnection will be close")
+			delete(confRoom.SubLocalVideoTrackList,userName)
+			delete(confRoom.SublocalAudioTrackList,userName)
 			peerConnection.Close()
 		}
 	})
@@ -371,8 +373,8 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// in a production application you should exchange ICE Candidates via OnICECandidate
 	<-gatherComplete
 
-	confRoom.SubLocalVideoTrackList = append(confRoom.SubLocalVideoTrackList, localVideoTrack)
-	confRoom.SublocalAudioTrackList = append(confRoom.SublocalAudioTrackList, localAudioTrack)
+	confRoom.SubLocalVideoTrackList[userName] = localVideoTrack
+	confRoom.SublocalAudioTrackList[userName] = localAudioTrack
 
 	logger.Info("handleSubOffer end, will return answer sdp:\n")
 	logger.Info(peerConnection.LocalDescription())
