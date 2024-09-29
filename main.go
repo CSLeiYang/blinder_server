@@ -431,7 +431,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// 	return "", err
 	// }
 
-	localVideoTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(confRoom.PubRemoteVideoTrack.Codec().RTPCodecCapability, "video", "pion")
+	localVideoTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "pion")
 	if newTrackErr != nil {
 		logger.Error(newTrackErr)
 		return "", newTrackErr
