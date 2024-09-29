@@ -466,15 +466,15 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-					logger.Info("aa ri:", i)
+					// logger.Info("aa ri:", i)
 
 					for _, localTrack := range confRoom.SublocalAudioTrackList {
-						wi, err := localTrack.Write(rtpBuf[:i])
+						_, err := localTrack.Write(rtpBuf[:i])
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
 						} else {
-							logger.Info("aa wi:", wi)
+							// logger.Info("aa wi:", wi)
 						}
 
 					}
@@ -506,6 +506,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						}
 
 					}
+					logger.Info("vvvveeeeee")
 
 				}
 
