@@ -1,6 +1,6 @@
 document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
-// document.getElementById('video-btn').addEventListener('click', toggleVideo);
+document.getElementById('video-btn').addEventListener('click', toggleVideo);
 
 let localStream;
 let peerConnection;
@@ -58,6 +58,10 @@ async function joinSession() {
         el.controls = true
         document.getElementById('remoteVideos').appendChild(el)
 
+        if (event.track.kind === 'video'){
+            localStream.getVideoTracks().forEach(track => track.enabled = false);
+        }
+
     };
 
     // Show video
@@ -81,7 +85,7 @@ async function joinSession() {
         }
     };
 
-    localStream.getVideoTracks().forEach(track => track.enabled = false);
+    
 }
 
 
