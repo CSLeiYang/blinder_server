@@ -24,7 +24,7 @@ async function joinSession() {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-    const ws = new WebSocket(`ws://${window.location.host}/ws`);
+    const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
         console.log('Connected to the signaling server');
 
