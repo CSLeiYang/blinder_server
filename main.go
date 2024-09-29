@@ -28,6 +28,11 @@ type ConfRoom struct {
 	CreatedAt              time.Time
 }
 
+type ConfInfo struct {
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 var ConfRoomList = make(map[string]*ConfRoom, 0)
 
 var upgrader = websocket.Upgrader{
@@ -41,7 +46,8 @@ func main() {
 	http.HandleFunc("/ws", HandleWebSocket)
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
-	http.HandleFunc("/api/conf", HandlePostConf) // New POST endpoint
+	http.HandleFunc("/api/conf", HandlePostConf)        // New POST endpoint
+	http.HandleFunc("/api/confInfo", HandleGetConfInfo) // 新增的 GET endpoint
 
 	// 启动 HTTP 服务器
 	go func() {
@@ -66,6 +72,24 @@ func main() {
 	}()
 
 	select {} // 阻止主 goroutine 退出
+}
+
+func HandleGetConfInfo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var confRooms []ConfInfo
+	for _, room := range ConfRoomList {
+		confRooms = append(confRooms, ConfInfo{
+			Name:      room.Name,
+			CreatedAt: room.CreatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(confRooms)
 }
 
 // HandlePostConf processes HTTP POST requests for creating or joining a conference room.
@@ -345,7 +369,8 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	confRoom.SubLocalVideoTrackList = append(confRoom.SubLocalVideoTrackList, localVideoTrack)
 	confRoom.SublocalAudioTrackList = append(confRoom.SublocalAudioTrackList, localAudioTrack)
 
-	logger.Info("handleOffer sub comming end")
+	logger.Info("handleSubOffer end, will return answer sdp:\n")
+	logger.Info(peerConnection.LocalDescription())
 	// Get the LocalDescription and take it to base64 so we can paste in browser
 	return encode(peerConnection.LocalDescription()), nil
 
@@ -498,8 +523,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// in a production application you should exchange ICE Candidates via OnICECandidate
 	<-gatherComplete
 
-	
-	logger.Info("handlePubOffer comming end, will return answer sdp:\n")
+	logger.Info("handlePubOffer end, will return answer sdp:\n")
 	logger.Info(peerConnection.LocalDescription())
 
 	// Get the LocalDescription and take it to base64 so we can paste in browser

@@ -1,14 +1,14 @@
-document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
-// document.getElementById('video-btn').addEventListener('click', toggleVideo);
+document.getElementById('confInfoBtn').addEventListener('click', getConfInfo);
+
 
 let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
 
-async function joinSession() {
-    const name = document.getElementById('name').value;
+async function joinSession(confName) {
+    const name = confName
     if (!name) {
         alert('Please enter your name');
         return;
@@ -58,7 +58,7 @@ async function joinSession() {
         el.controls = true
         document.getElementById('remoteVideos').appendChild(el)
 
-        if (event.track.kind === 'video'){
+        if (event.track.kind === 'video') {
             localStream.getVideoTracks().forEach(track => track.enabled = false);
         }
 
@@ -85,7 +85,39 @@ async function joinSession() {
         }
     };
 
-    
+
+}
+
+async function getConfInfo() {
+    try {
+        const response = await fetch('https://blinder.aiiyou.cn:9443/api/confInfo');
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const data = await response.json(); // 假设服务器返回 JSON 格式数据
+        const linkContainer = document.getElementById('confInfoResult');
+        linkContainer.innerHTML = ''; // 清空之前的内容
+
+        data.forEach(room => {
+            // 创建超链接
+            const link = document.createElement('a');
+            link.href = '#'; // 设置为您希望的链接地址
+            link.textContent = room.name; // 使用房间名称作为链接文本
+
+            // 添加点击事件
+            link.onclick = (e) => {
+                e.preventDefault(); // 防止默认行为
+                joinRoom(room.name); // 调用 joinRoom 函数
+            };
+
+            // 将链接添加到容器
+            linkContainer.appendChild(link);
+            linkContainer.appendChild(document.createElement('br')); // 换行
+        });
+
+    } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+    }
 }
 
 
@@ -95,8 +127,4 @@ function toggleMute() {
     document.getElementById('mute-btn').textContent = isMuted ? 'Unmute' : 'Mute';
 }
 
-function toggleVideo() {
-    localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
-    isVideoStopped = !isVideoStopped;
-    document.getElementById('video-btn').textContent = isVideoStopped ? 'Start Video' : 'Stop Video';
-}
+
