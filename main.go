@@ -488,7 +488,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				for {
-
+					logger.Info("vvvv")
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
