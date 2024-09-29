@@ -481,7 +481,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 				}
 			}()
-
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
 			go func() {
@@ -497,7 +496,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					}
 					logger.Info("vv ri:", i)
 
-					for _, localTrack := range confRoom.SublocalAudioTrackList {
+					for _, localTrack := range confRoom.SubLocalVideoTrackList {
 						wi, err := localTrack.Write(rtpBuf[:i])
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
