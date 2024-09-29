@@ -107,11 +107,16 @@ async function getConfInfo() {
             // 添加点击事件
             link.onclick = (e) => {
                 e.preventDefault(); // 防止默认行为
-                joinRoom(room.name); // 调用 joinRoom 函数
+                joinSession(room.name); // 调用 joinRoom 函数
             };
 
-            // 将链接添加到容器
+            // 创建房间创建时间的元素
+            const creationTime = document.createElement('span');
+            creationTime.textContent = ` (创建时间: ${new Date(room.createdAt).toLocaleString()})`; // 格式化时间
+
+            // 将链接和创建时间添加到容器
             linkContainer.appendChild(link);
+            linkContainer.appendChild(creationTime);
             linkContainer.appendChild(document.createElement('br')); // 换行
         });
 
