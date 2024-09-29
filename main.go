@@ -23,8 +23,8 @@ type ConfRoom struct {
 	PubRemoteVideoTrack    *webrtc.TrackRemote
 	PubRemoteAudioTrack    *webrtc.TrackRemote
 	PubLocalAudioTrack     *webrtc.TrackLocalStaticRTP
-	SubLocalVideoTrackList map[string]*webrtc.TrackLocalStaticRTP
-	SublocalAudioTrackList map[string]*webrtc.TrackLocalStaticRTP
+	SubLocalVideoTrack map[string]*webrtc.TrackLocalStaticRTP
+	SublocalAudioTrack map[string]*webrtc.TrackLocalStaticRTP
 	CreatedAt              time.Time
 }
 
@@ -291,8 +291,8 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateFailed {
 			logger.Warn("peerConnection will be close")
-			delete(confRoom.SubLocalVideoTrackList, userName)
-			delete(confRoom.SublocalAudioTrackList, userName)
+			delete(confRoom.SubLocalVideoTrack, userName)
+			delete(confRoom.SublocalAudioTrack, userName)
 			peerConnection.Close()
 		}
 	})
@@ -373,8 +373,8 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 	// in a production application you should exchange ICE Candidates via OnICECandidate
 	<-gatherComplete
 
-	confRoom.SubLocalVideoTrackList[userName] = localVideoTrack
-	confRoom.SublocalAudioTrackList[userName] = localAudioTrack
+	confRoom.SubLocalVideoTrack[userName] = localVideoTrack
+	confRoom.SublocalAudioTrack[userName] = localAudioTrack
 
 	logger.Info("handleSubOffer end, will return answer sdp:\n")
 	logger.Info(peerConnection.LocalDescription())
@@ -468,7 +468,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					}
 					// logger.Info("aa ri:", i)
 
-					for _, localTrack := range confRoom.SublocalAudioTrackList {
+					for _, localTrack := range confRoom.SublocalAudioTrack {
 						_, err := localTrack.Write(rtpBuf[:i])
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
@@ -496,7 +496,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					}
 					logger.Info("vv ri:", i)
 
-					for _, localTrack := range confRoom.SubLocalVideoTrackList {
+					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						wi, err := localTrack.Write(rtpBuf[:i])
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
@@ -589,8 +589,8 @@ func CreateConfRoom(name string) (*ConfRoom, error) {
 	logger.Info("CreateConfRoom comming...")
 	newRoom := &ConfRoom{
 		Name:                   name,
-		SubLocalVideoTrackList: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
-		SublocalAudioTrackList: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
+		SubLocalVideoTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
+		SublocalAudioTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
 		CreatedAt:              time.Now(), // 记录创建时间
 
 	}
