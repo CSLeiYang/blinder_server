@@ -1,6 +1,6 @@
 document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
-document.getElementById('video-btn').addEventListener('click', toggleVideo);
+// document.getElementById('video-btn').addEventListener('click', toggleVideo);
 
 let localStream;
 let peerConnection;
