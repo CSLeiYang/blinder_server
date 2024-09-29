@@ -426,10 +426,30 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 
-	if _, err = peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
+	// if _, err = peerConnection.AddTransceiverFromKind(webrtc.RTPCodecTypeVideo); err != nil {
+	// 	logger.Error(err)
+	// 	return "", err
+	// }
+
+	localVideoTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(confRoom.PubRemoteVideoTrack.Codec().RTPCodecCapability, "video", "pion")
+	if newTrackErr != nil {
+		logger.Error(newTrackErr)
+		return "", newTrackErr
+	}
+
+	rtpVideoSender, err := peerConnection.AddTrack(localVideoTrack)
+	if err != nil {
 		logger.Error(err)
 		return "", err
 	}
+	go func() {
+		rtcpBuf := make([]byte, 1500)
+		for {
+			if _, _, rtcpErr := rtpVideoSender.Read(rtcpBuf); rtcpErr != nil {
+				return
+			}
+		}
+	}()
 
 	localAudioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus}, "audio", "pion")
 	if err != nil {
