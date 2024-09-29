@@ -353,7 +353,7 @@ func HandleSubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
-	logger.Info("handleOffer comming...")
+	logger.Info("handlePubOffer comming...")
 
 	offerSD := webrtc.SessionDescription{}
 	err := decode(offer, &offerSD)
@@ -498,7 +498,9 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// in a production application you should exchange ICE Candidates via OnICECandidate
 	<-gatherComplete
 
-	logger.Info("handleOffer comming end")
+	
+	logger.Info("handlePubOffer comming end, will return answer sdp:\n")
+	logger.Info(peerConnection.LocalDescription())
 
 	// Get the LocalDescription and take it to base64 so we can paste in browser
 	return encode(peerConnection.LocalDescription()), nil
