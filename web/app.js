@@ -98,11 +98,13 @@ async function getConfInfo() {
         const linkContainer = document.getElementById('confInfoResult');
         linkContainer.innerHTML = ''; // 清空之前的内容
 
-        data.forEach(room => {
+        data?data.forEach(room => {
             // 创建超链接
             const link = document.createElement('a');
             link.href = '#'; // 设置为您希望的链接地址
             link.textContent = room.name; // 使用房间名称作为链接文本
+            link.target = '_blank';
+            
 
             // 添加点击事件
             link.onclick = (e) => {
@@ -118,7 +120,7 @@ async function getConfInfo() {
             linkContainer.appendChild(link);
             linkContainer.appendChild(creationTime);
             linkContainer.appendChild(document.createElement('br')); // 换行
-        });
+        }):linkContainer.innerHTML='No active confRoom';
 
     } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
