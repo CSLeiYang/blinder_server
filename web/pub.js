@@ -72,10 +72,12 @@ async function joinSession(confName) {
 
     //Show video
     const localVideo = document.createElement('video');
+    localVideo.id = 'local-video'; // Add an ID for styling
     localVideo.srcObject = localStream;
     localVideo.autoplay = true;
     localVideo.muted = true;
     document.getElementById('videos').appendChild(localVideo);
+
 
     ws.onmessage = async (event) => {
         const jsonObject = JSON.parse(event.data);
