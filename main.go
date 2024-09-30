@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	"yanglei_blinder/logger"
 
@@ -489,7 +490,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteAudioTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v_%v_%v_%v.raw", recordPath, confRoom.Name, codec.MimeType, codec.Channels, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v_%v_%v_%v.raw", recordPath, confRoom.Name, strings.Split(codec.MimeType, "/")[1], codec.Channels, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 				audioFile, err := os.OpenFile(audioFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
@@ -531,7 +532,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v_%v_%v.raw", recordPath, confRoom.Name, codec.MimeType, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v_%v_%v.raw", recordPath, confRoom.Name, strings.Split(codec.MimeType, "/")[1], codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 				videoFile, err := os.OpenFile(videoFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
