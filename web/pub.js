@@ -38,22 +38,32 @@ async function joinSession(confName) {
     ws.onopen = async () => {
         console.log('Connected to the signaling server');
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        console.log(JSON.stringify(offer));
-
-        ws.send(JSON.stringify({
-            userId: '123456',
-            sdp: btoa(JSON.stringify(offer)),
-            cmd: 'create',
-            roomName: name
-        }));
     };
+
+    async function createOffer() {
+        try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            console.log("生成的 SDP:", offer.sdp);
+            ws.send(JSON.stringify({
+                userId: '123456',
+                sdp: btoa(JSON.stringify(offer)),
+                cmd: 'create',
+                roomName: name
+            }));
+        } catch (error) {
+            console.error("创建 offer 时出错:", error);
+        }
+    }
 
     let iceCandidates = [];
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
             iceCandidates.push(event.candidate);
+        }else {
+            // 所有候选者收集完成
+            console.log("所有候选者已收集:", candidates);
+            createOffer(); // 调用 createOffer
         }
     };
 
