@@ -5,9 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 	"yanglei_blinder/logger"
 
@@ -42,6 +44,8 @@ var upgrader = websocket.Upgrader{
 var webPort = ":9000"
 var httpsPort = ":9443"
 
+var recordPath = "./record"
+
 func main() {
 	http.HandleFunc("/ws", HandleWebSocket)
 	fs := http.FileServer(http.Dir("./web"))
@@ -70,6 +74,8 @@ func main() {
 		}
 		log.Fatal(srv.ListenAndServeTLS(certFile, keyFile))
 	}()
+
+	os.MkdirAll(recordPath, os.ModePerm)
 
 	select {} // 阻止主 goroutine 退出
 }
@@ -481,11 +487,24 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				logger.Info("this is auido track")
 				confRoom.PubRemoteAudioTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
+				// 创建或打开音频录制文件
+				audioFile, err := os.OpenFile(fmt.Sprintf("%s/%s_pub_audio_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					logger.Error(err)
+					return
+				}
+				defer audioFile.Close()
+
 				for {
 
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
+						return
+					}
+
+					if _, err := audioFile.Write(rtpBuf[:i]); err != nil {
+						logger.Error(err)
 						return
 					}
 
@@ -495,7 +514,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 							logger.Error(err)
 							break
 						} else {
-							logger.Infof("audio ri: %v wi:%v", i,wi)
+							logger.Infof("audio ri: %v wi:%v", i, wi)
 						}
 
 					}
@@ -508,10 +527,22 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				logger.Info("this is video track")
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
+				// 创建或打开音频录制文件
+				videoFile, err := os.OpenFile(fmt.Sprintf("%s/%s_pub_video_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					logger.Error(err)
+					return
+				}
+				defer videoFile.Close()
 				for {
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
+						return
+					}
+
+					if _, err := videoFile.Write(rtpBuf[:i]); err != nil {
+						logger.Error(err)
 						return
 					}
 
@@ -521,7 +552,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 							logger.Error(err)
 							break
 						} else {
-							logger.Infof("video ri:%v wi:%v:", i,wi)
+							logger.Infof("video ri:%v wi:%v:", i, wi)
 						}
 
 					}
