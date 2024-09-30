@@ -39,7 +39,7 @@ async function joinSession(confName) {
         if (!parameters.encodings) {
             parameters.encodings = [{}];
         }
-        parameters.encodings[0].maxBitrate = 150000; // 设置最大码率为1Mbps
+        parameters.encodings[0].maxBitrate = 300000; // 设置最大码率为1Mbps
         sender.setParameters(parameters);
     });
 
