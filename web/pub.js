@@ -66,7 +66,7 @@ async function joinSession(confName) {
         el.srcObject = event.streams[0]
         el.autoplay = true
         el.controls = true
-        document.getElementById('videos').appendChild(el)
+        document.getElementById('remote-videos').appendChild(el)
 
     };
 
