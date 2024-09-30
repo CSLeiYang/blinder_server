@@ -23,7 +23,15 @@ async function joinSession(confName) {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+            facingMode: { exact: 'environment' }, // 使用后置摄像头
+            width: { ideal: 640 }, // 理想宽度
+            height: { ideal: 360 }, // 理想高度
+            frameRate: { ideal: 15, max: 30 } // 最大帧率
+        },
+        audio: true
+    });
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
