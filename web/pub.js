@@ -89,7 +89,8 @@ async function joinSession() {
 
     };
     //trigger ice collection
-    await peerConnection.createOffer();
+    const firstOffer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(firstOffer);
 
     //Show video
     const localVideo = document.createElement('video');
