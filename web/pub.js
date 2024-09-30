@@ -22,17 +22,23 @@ async function joinSession() {
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { exact: 'environment' }, // 使用后置摄像头
+                // width: { ideal: 640 }, // 理想宽度
+                // height: { ideal: 360 }, // 理想高度
+                frameRate: { ideal: 15, max: 30 } // 最大帧率
+            },
+            audio: true
+        });
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    } catch (error) {
+        console.error('获取媒体流失败:', error);
+        alert('获取媒体流失败: ' + error.message);
+    }
 
-    localStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-            facingMode: { exact: 'environment' }, // 使用后置摄像头
-            width: { ideal: 640 }, // 理想宽度
-            height: { ideal: 360 }, // 理想高度
-            frameRate: { ideal: 15, max: 30 } // 最大帧率
-        },
-        audio: true
-    });
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
@@ -60,7 +66,7 @@ async function joinSession() {
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
             iceCandidates.push(event.candidate);
-        }else {
+        } else {
             // 所有候选者收集完成
             console.log("所有候选者已收集:", candidates);
             createOffer(); // 调用 createOffer
