@@ -488,15 +488,14 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-					// logger.Info("aa ri:", i)
 
 					for _, localTrack := range confRoom.SublocalAudioTrack {
-						_, err := localTrack.Write(rtpBuf[:i])
+						wi, err := localTrack.Write(rtpBuf[:i])
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
 						} else {
-							// logger.Info("aa wi:", wi)
+							logger.Infof("audio ri: %v wi:%v", i,wi)
 						}
 
 					}
@@ -510,13 +509,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				for {
-					logger.Info("vvvv")
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
-					logger.Info("vv ri:", i)
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						wi, err := localTrack.Write(rtpBuf[:i])
@@ -524,11 +521,10 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 							logger.Error(err)
 							break
 						} else {
-							logger.Info("vv wi:", wi)
+							logger.Infof("video ri:%v wi:%v:", i,wi)
 						}
 
 					}
-					logger.Info("vvvveeeeee")
 
 				}
 
