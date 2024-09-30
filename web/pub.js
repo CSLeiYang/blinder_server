@@ -8,9 +8,8 @@ let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
-let iceCandidates = [];
 
-async function joinSession() {
+async function joinSession(confName) {
     const name = document.getElementById('name').value;
     if (!name) {
         alert('Please enter your name');
@@ -23,57 +22,38 @@ async function joinSession() {
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { ideal: 'environment' }, // 使用后置摄像头
-                width: { ideal: 640 }, // 理想宽度
-                height: { ideal: 360 }, // 理想高度
-                frameRate: { ideal: 15, max: 30 } // 最大帧率
-            },
-            audio: true
-        });
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    } catch (error) {
-        console.error('获取媒体流失败:', error);
-        alert('获取媒体流失败: ' + error.message);
-    }
 
-
+    localStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+            facingMode: { ideal: 'environment' }, // 使用后置摄像头
+            width: { ideal: 640 }, // 理想宽度
+            height: { ideal: 360 }, // 理想高度
+            frameRate: { ideal: 15, max: 30 } // 最大帧率
+        },
+        audio: true
+    });
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
         console.log('Connected to the signaling server');
-        createOffer()
 
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        console.log(JSON.stringify(offer));
+
+        ws.send(JSON.stringify({
+            userId: '123456',
+            sdp: btoa(JSON.stringify(offer)),
+            cmd: 'create',
+            roomName: name
+        }));
     };
 
-
-
-    async function createOffer() {
-        try {
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            console.log("生成的 SDP:", offer.sdp);
-            ws.send(JSON.stringify({
-                userId: '123456',
-                sdp: btoa(JSON.stringify(offer)),
-                cmd: 'create',
-                roomName: name
-            }));
-        } catch (error) {
-            console.error("创建 offer 时出错:", error);
-        }
-    }
-
+    let iceCandidates = [];
     peerConnection.onicecandidate = (event) => {
-        console.log(`onicecandidate: ${JSON.stringify(event)}`)
         if (event.candidate) {
             iceCandidates.push(event.candidate);
-        } else {
-            // 所有候选者收集完成
-            console.log("所有候选者已收集:", iceCandidates);
-            createOffer(); // 调用 createOffer
         }
     };
 
@@ -89,7 +69,6 @@ async function joinSession() {
         document.getElementById('videos').appendChild(el)
 
     };
-
 
     //Show video
     const localVideo = document.createElement('video');
