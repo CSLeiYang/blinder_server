@@ -8,6 +8,7 @@ let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
+let iceCandidates = [];
 
 async function joinSession() {
     const name = document.getElementById('name').value;
@@ -25,7 +26,10 @@ async function joinSession() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { exact: 'environment' }, // 使用后置摄像头
+                facingMode: { ideal: 'environment' }, // 使用后置摄像头
+                width: { ideal: 640 }, // 理想宽度
+                height: { ideal: 360 }, // 理想高度
+                frameRate: { ideal: 15, max: 30 } // 最大帧率
             },
             audio: true
         });
@@ -59,7 +63,6 @@ async function joinSession() {
         }
     }
 
-    let iceCandidates = [];
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
             iceCandidates.push(event.candidate);
