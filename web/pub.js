@@ -34,6 +34,8 @@ async function joinSession() {
             audio: true
         });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        //trigger ice collection
+        peerConnection.createOffer();
     } catch (error) {
         console.error('获取媒体流失败:', error);
         alert('获取媒体流失败: ' + error.message);
@@ -47,8 +49,7 @@ async function joinSession() {
 
     };
 
-    //trigger ice collection
-    peerConnection.createOffer();
+
 
     async function createOffer() {
         try {
