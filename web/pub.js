@@ -44,6 +44,7 @@ async function joinSession() {
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
         console.log('Connected to the signaling server');
+        createOffer()
 
     };
 
@@ -88,9 +89,7 @@ async function joinSession() {
         document.getElementById('videos').appendChild(el)
 
     };
-    //trigger ice collection
-    const firstOffer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(firstOffer);
+
 
     //Show video
     const localVideo = document.createElement('video');
