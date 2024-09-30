@@ -485,10 +485,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
 				logger.Info("this is auido track")
+				codec := remoteTrack.Codec()
 				confRoom.PubRemoteAudioTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15:04:05"))
+				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v_%v_%v_%v.raw", recordPath, confRoom.Name, codec.MimeType, codec.Channels, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15:04:05"))
 				audioFile, err := os.OpenFile(audioFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
@@ -526,10 +527,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
 			go func() {
 				logger.Info("this is video track")
+				codec := remoteTrack.Codec()
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15:04:05"))
+				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v_%v_%v.raw", recordPath, confRoom.Name, codec.MimeType, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15:04:05"))
 				videoFile, err := os.OpenFile(videoFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
