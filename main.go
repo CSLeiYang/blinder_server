@@ -18,14 +18,14 @@ import (
 )
 
 type ConfRoom struct {
-	Name                   string
-	PubPC                  *webrtc.PeerConnection
-	PubRemoteVideoTrack    *webrtc.TrackRemote
-	PubRemoteAudioTrack    *webrtc.TrackRemote
-	PubLocalAudioTrack     *webrtc.TrackLocalStaticRTP
-	SubLocalVideoTrack map[string]*webrtc.TrackLocalStaticRTP
-	SublocalAudioTrack map[string]*webrtc.TrackLocalStaticRTP
-	CreatedAt              time.Time
+	Name                string
+	PubPC               *webrtc.PeerConnection
+	PubRemoteVideoTrack *webrtc.TrackRemote
+	PubRemoteAudioTrack *webrtc.TrackRemote
+	PubLocalAudioTrack  *webrtc.TrackLocalStaticRTP
+	SubLocalVideoTrack  map[string]*webrtc.TrackLocalStaticRTP
+	SublocalAudioTrack  map[string]*webrtc.TrackLocalStaticRTP
+	CreatedAt           time.Time
 }
 
 type ConfInfo struct {
@@ -269,21 +269,23 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
-			logger.Info("Audio Track")
-			rtpBuf := make([]byte, 1400)
-			for {
-				i, _, readErr := remoteTrack.Read(rtpBuf)
-				if readErr != nil {
-					logger.Error(readErr)
-					return
-				}
+			go func() {
+				logger.Info("Audio Track")
+				rtpBuf := make([]byte, 1400)
+				for {
+					i, _, readErr := remoteTrack.Read(rtpBuf)
+					if readErr != nil {
+						logger.Error(readErr)
+						return
+					}
 
-				if _, err = confRoom.PubLocalAudioTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
-					logger.Error(err)
-					break
-				}
+					if _, err = confRoom.PubLocalAudioTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+						logger.Error(err)
+						break
+					}
 
-			}
+				}
+			}()
 
 		}
 	})
@@ -608,10 +610,10 @@ func decode(in string, obj *webrtc.SessionDescription) error {
 func CreateConfRoom(name string) (*ConfRoom, error) {
 	logger.Info("CreateConfRoom comming...")
 	newRoom := &ConfRoom{
-		Name:                   name,
+		Name:               name,
 		SubLocalVideoTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
 		SublocalAudioTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
-		CreatedAt:              time.Now(), // 记录创建时间
+		CreatedAt:          time.Now(), // 记录创建时间
 
 	}
 
