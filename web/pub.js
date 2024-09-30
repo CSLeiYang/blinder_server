@@ -31,16 +31,29 @@ async function joinSession(confName) {
             frameRate: { ideal: 15, max: 30 }, // 最大帧率
 
         },
-        audio: true
+        audio: {
+            channelCount: 1,
+        }
     });
     localStream.getTracks().forEach(track => {
         const sender = peerConnection.addTrack(track, localStream);
         const parameters = sender.getParameters();
-        if (!parameters.encodings) {
-            parameters.encodings = [{}];
+
+        if (track.kind === 'video') {
+            if (!parameters.encodings) {
+                parameters.encodings = [{}];
+            }
+            parameters.encodings[0].maxBitrate = 300000; // 设置最大码率为1Mbps
+            sender.setParameters(parameters);
         }
-        parameters.encodings[0].maxBitrate = 300000; // 设置最大码率为1Mbps
-        sender.setParameters(parameters);
+
+        if (track.kind === 'audio') {
+            if (!parameters.encodings) {
+                parameters.encodings = [{}];
+            }
+            parameters.encodings[0].maxBitrate = 16000; // 设置音频最大码率为64kbps
+        }
+
     });
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
