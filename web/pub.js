@@ -47,6 +47,9 @@ async function joinSession() {
 
     };
 
+    //trigger ice collection
+    peerConnection.createOffer();
+
     async function createOffer() {
         try {
             const offer = await peerConnection.createOffer();
