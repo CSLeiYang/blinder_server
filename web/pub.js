@@ -76,7 +76,7 @@ async function joinSession(confName) {
     localVideo.srcObject = localStream;
     localVideo.autoplay = true;
     localVideo.muted = true;
-    document.getElementById('videos').appendChild(localVideo);
+    document.getElementById('local-video').appendChild(localVideo);
 
 
     ws.onmessage = async (event) => {
