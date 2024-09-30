@@ -34,8 +34,6 @@ async function joinSession() {
             audio: true
         });
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-        //trigger ice collection
-        peerConnection.createOffer();
     } catch (error) {
         console.error('获取媒体流失败:', error);
         alert('获取媒体流失败: ' + error.message);
@@ -68,6 +66,7 @@ async function joinSession() {
     }
 
     peerConnection.onicecandidate = (event) => {
+        console.log(`onicecandidate: ${JSON.stringify(event)}`)
         if (event.candidate) {
             iceCandidates.push(event.candidate);
         } else {
@@ -89,6 +88,8 @@ async function joinSession() {
         document.getElementById('videos').appendChild(el)
 
     };
+    //trigger ice collection
+    await peerConnection.createOffer();
 
     //Show video
     const localVideo = document.createElement('video');
