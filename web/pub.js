@@ -28,11 +28,20 @@ async function joinSession(confName) {
             facingMode: { ideal: 'environment' }, // 使用后置摄像头
             width: { ideal: 640 }, // 理想宽度
             height: { ideal: 360 }, // 理想高度
-            frameRate: { ideal: 15, max: 30 } // 最大帧率
+            frameRate: { ideal: 15, max: 30 }, // 最大帧率
+
         },
         audio: true
     });
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    localStream.getTracks().forEach(track => {
+        const sender = peerConnection.addTrack(track, stream);
+        const parameters = sender.getParameters();
+        if (!parameters.encodings) {
+            parameters.encodings = [{}];
+        }
+        parameters.encodings[0].maxBitrate = 150000; // 设置最大码率为1Mbps
+        sender.setParameters(parameters);
+    });
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
