@@ -71,7 +71,7 @@ async function joinSession() {
             iceCandidates.push(event.candidate);
         } else {
             // 所有候选者收集完成
-            console.log("所有候选者已收集:", candidates);
+            console.log("所有候选者已收集:", iceCandidates);
             createOffer(); // 调用 createOffer
         }
     };
