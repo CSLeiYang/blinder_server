@@ -9,7 +9,7 @@ let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
 
-async function joinSession(confName) {
+async function joinSession() {
     const name = document.getElementById('name').value;
     if (!name) {
         alert('Please enter your name');
