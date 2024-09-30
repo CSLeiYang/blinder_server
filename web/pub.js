@@ -34,7 +34,7 @@ async function joinSession(confName) {
         audio: true
     });
     localStream.getTracks().forEach(track => {
-        const sender = peerConnection.addTrack(track, stream);
+        const sender = peerConnection.addTrack(track, localStream);
         const parameters = sender.getParameters();
         if (!parameters.encodings) {
             parameters.encodings = [{}];
