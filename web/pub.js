@@ -28,7 +28,7 @@ async function joinSession() {
                 facingMode: { exact: 'environment' }, // 使用后置摄像头
                 // width: { ideal: 640 }, // 理想宽度
                 // height: { ideal: 360 }, // 理想高度
-                frameRate: { ideal: 15, max: 30 } // 最大帧率
+                // frameRate: { ideal: 15, max: 30 } // 最大帧率
             },
             audio: true
         });
@@ -38,7 +38,7 @@ async function joinSession() {
         alert('获取媒体流失败: ' + error.message);
     }
 
-    
+
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
