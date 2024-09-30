@@ -488,7 +488,8 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteAudioTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				audioFile, err := os.OpenFile(fmt.Sprintf("%s/%s_pub_audio_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02 15:04:05"))
+				audioFile, err := os.OpenFile(audioFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
 					return
@@ -528,7 +529,8 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				videoFile, err := os.OpenFile(fmt.Sprintf("%s/%s_pub_video_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v.raw", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02 15:04:05"))
+				videoFile, err := os.OpenFile(videoFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 				if err != nil {
 					logger.Error(err)
 					return
