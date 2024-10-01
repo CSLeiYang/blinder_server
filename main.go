@@ -415,10 +415,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	m := &webrtc.MediaEngine{}
 	err = m.RegisterCodec(webrtc.RTPCodecParameters{
+		
         RTPCodecCapability: webrtc.RTPCodecCapability{
             MimeType:    webrtc.MimeTypeH264,
             ClockRate:   90000,
-            Channels:    1, // H.264 一般是单通道
+            Channels:    0, // H.264 一般是单通道
             SDPFmtpLine: "", // 可以根据需要填入 SDP 参数
             RTCPFeedback: []webrtc.RTCPFeedback{}, // 如果不需要 RTCP 反馈，可以使用空切片
         },
@@ -434,7 +435,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
         RTPCodecCapability: webrtc.RTPCodecCapability{
             MimeType:    webrtc.MimeTypeOpus,
             ClockRate:   48000,
-            Channels:    1, // 指定为单通道
+            Channels:    0, // 指定为单通道
             SDPFmtpLine: "minptime=10; maxplaybackrate=16000", // 根据需求定义
             RTCPFeedback: []webrtc.RTCPFeedback{}, // 如果不需要 RTCP 反馈，可以使用空切片
         },
@@ -445,6 +446,8 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		logger.Error(err)
 		return "", err
 	}
+
+
 	i := &interceptor.Registry{}
 	if err = webrtc.RegisterDefaultInterceptors(m, i); err != nil {
 		logger.Error(err)
