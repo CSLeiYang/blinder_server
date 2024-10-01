@@ -595,12 +595,24 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// Create channel that is blocked until ICE Gathering is complete
 	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 
-	// Sets the LocalDescription, and starts our UDP listeners
-	err = peerConnection.SetLocalDescription(answer)
+	// 在这里修改 answer.SDP
+	answerSDP := strings.ReplaceAll(answer.SDP, "opus/48000/2", "opus/24000/1") // 添加你的修改函数
+
+	// Set modified answer SD
+	err = peerConnection.SetLocalDescription(webrtc.SessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  answerSDP,
+	})
 	if err != nil {
 		logger.Error(err)
 		return "", err
 	}
+	// Sets the LocalDescription, and starts our UDP listeners
+	// err = peerConnection.SetLocalDescription(answer)
+	// if err != nil {
+	// 	logger.Error(err)
+	// 	return "", err
+	// }
 
 	// Block until ICE Gathering is complete, disabling trickle ICE
 	// we do this because we only can exchange one signaling message
