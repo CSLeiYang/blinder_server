@@ -23,18 +23,26 @@ async function joinSession(confName) {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
 
-    localStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-            facingMode: { ideal: 'environment' }, // 使用后置摄像头
-            width: { ideal: 640 }, // 理想宽度
-            height: { ideal: 360 }, // 理想高度
-            frameRate: { ideal: 15, max: 30 }, // 最大帧率
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: 'environment' }, // 使用后置摄像头
+                width: { ideal: 640 }, // 理想宽度
+                height: { ideal: 480 }, // 理想高度
+                frameRate: { ideal: 15, max: 30 }, // 最大帧率
 
-        },
-        audio: {
-            channelCount: 1,
-        }
-    });
+            },
+            audio: {
+                channelCount: 1,
+                maxBitrate: 16000,
+            }
+        });
+
+    } catch (error) {
+        alert(`initLocalStream error: ${error}`)
+
+    }
+
     localStream.getTracks().forEach(track => {
         const sender = peerConnection.addTrack(track, localStream);
         const parameters = sender.getParameters();
@@ -43,7 +51,7 @@ async function joinSession(confName) {
             if (!parameters.encodings) {
                 parameters.encodings = [{}];
             }
-            parameters.encodings[0].maxBitrate = 300000; // 设置最大码率为1Mbps
+            parameters.encodings[0].maxBitrate = 250000; // 设置最大码率为1Mbps
             sender.setParameters(parameters);
         }
 
@@ -51,8 +59,9 @@ async function joinSession(confName) {
             if (!parameters.encodings) {
                 parameters.encodings = [{}];
             }
-            parameters.encodings[0].maxBitrate = 16000; // 设置音频最大码率为64kbps
+            parameters.encodings[0].maxBitrate = 16000; // 设置音频最大码率为16kbps
             parameters.encodings[0].channelCount = 1;
+            sender.setParameters(parameters);
         }
 
     });

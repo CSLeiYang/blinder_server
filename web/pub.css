@@ -12,6 +12,8 @@ body {
     justify-content: center;
     align-items: center;
     flex-grow: 1;
+    font-size: xx-large;
+
 }
 
 #participant-view {
@@ -24,20 +26,30 @@ body {
     flex: 1;
     position: relative;
     display: flex;
-    align-items: flex-start; /* 确保视频顶部对齐 */
-    justify-content: flex-end; /* 右对齐 */
-    padding: 10px; /* 添加内边距 */
-    background-color: #f8f8f8; /* 背景颜色 */
+    align-items: flex-start;
+    /* 确保视频顶部对齐 */
+    justify-content: flex-end;
+    /* 右对齐 */
+    padding: 10px;
+    /* 添加内边距 */
+    background-color: #f8f8f8;
+    /* 背景颜色 */
 }
 
 #local-video-container {
-    position: relative; /* 改为相对定位 */
-    width: 120px; /* 可以根据需要调整大小 */
-    height: auto; /* 保持纵横比 */
+    position: relative;
+    /* 改为相对定位 */
+    width: 120px;
+    /* 可以根据需要调整大小 */
+    height: auto;
+    /* 保持纵横比 */
     overflow: hidden;
-    border: 2px solid #ccc; /* 可选边框 */
-    border-radius: 8px; /* 可选圆角 */
-    background: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+    border: 2px solid #ccc;
+    /* 可选边框 */
+    border-radius: 8px;
+    /* 可选圆角 */
+    background: rgba(255, 255, 255, 0.8);
+    /* 半透明背景 */
 }
 
 #local-video {
@@ -48,23 +60,32 @@ body {
 #controls {
     display: flex;
     justify-content: center;
-    padding: 5px; /* 调整内边距 */
+    padding: 5px;
+    /* 调整内边距 */
     background-color: #f0f0f0;
     border-top: 1px solid #ccc;
-    border-radius: 0 0 8px 8px; /* 圆角处理 */
+    border-radius: 0 0 8px 8px;
+    /* 圆角处理 */
 }
 
 .video-group {
     flex-grow: 1;
     display: flex;
-    flex-wrap: wrap; /* 允许换行 */
-    justify-content: center; /* 居中远端视频 */
-    gap: 10px; /* 视频之间的间距 */
+    flex-wrap: wrap;
+    /* 允许换行 */
+    justify-content: center;
+    /* 居中远端视频 */
+    gap: 10px;
+    /* 视频之间的间距 */
 }
 
 .remote-video {
-    width: 160px; /* 远端视频的宽度 */
-    height: auto; /* 保持纵横比 */
-    border: 2px solid #ccc; /* 可选边框 */
-    border-radius: 8px; /* 可选圆角 */
+    width: 160px;
+    /* 远端视频的宽度 */
+    height: auto;
+    /* 保持纵横比 */
+    border: 2px solid #ccc;
+    /* 可选边框 */
+    border-radius: 8px;
+    /* 可选圆角 */
 }
