@@ -61,7 +61,7 @@ async function joinSession(confName) {
             }
             parameters.encodings[0].maxBitrate = 16000; // 设置音频最大码率为16kbps
             parameters.encodings[0].channelCount = 1;
-            sender.setParameters(parameters);
+            // sender.setParameters(parameters);
         }
 
     });
