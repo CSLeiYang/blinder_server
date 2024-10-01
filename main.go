@@ -460,7 +460,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	// 	}
 	// }()
 
-	localAudioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus}, "audio", "pion")
+	localAudioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypePCMU}, "audio", "pion")
 	if err != nil {
 		logger.Error(err)
 		return "", err
