@@ -18,7 +18,6 @@ import (
 	"github.com/pion/interceptor/pkg/intervalpli"
 
 	"github.com/pion/webrtc/v4"
-	"github.com/pion/webrtc/v4/pkg/media"
 	"github.com/pion/webrtc/v4/pkg/media/ivfwriter"
 	"github.com/pion/webrtc/v4/pkg/media/oggwriter"
 )
@@ -280,16 +279,15 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
-				logger.Info("Audio Track")
-				rtpBuf := make([]byte, 1400)
+				logger.Info("Sub Audio Track")
 				for {
-					i, _, readErr := remoteTrack.Read(rtpBuf)
+					rtpPacket, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
 
-					if _, err = confRoom.PubLocalAudioTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+					if err = confRoom.PubLocalAudioTrack.WriteRTP(rtpPacket); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 						logger.Error(err)
 						break
 					}
@@ -503,31 +501,30 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		logger.Info("OnTrack comming....", remoteTrack)
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
-				saveToDisk(audioFile, remoteTrack)
-			}()
-			go func() {
 				logger.Info("this is auido track")
 				codec := remoteTrack.Codec()
 				logger.Infof("pub audio codec:%v", codec)
 				confRoom.PubRemoteAudioTrack = remoteTrack
-				rtpBuf := make([]byte, 1400)
 
 				for {
-					i, _, readErr := remoteTrack.Read(rtpBuf)
+					rtpPacket, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
 
 					for _, localTrack := range confRoom.SublocalAudioTrack {
-						wi, err := localTrack.Write(rtpBuf[:i])
+						err := localTrack.WriteRTP(rtpPacket)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
-						} else {
-							logger.Infof("audio ri: %v wi:%v", i, wi)
 						}
+					}
 
+					err := audioFile.WriteRTP(rtpPacket)
+					if err != nil {
+						logger.Error(err)
+						break
 					}
 
 				}
@@ -535,32 +532,32 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
 			go func() {
-				saveToDisk(videoFile, remoteTrack)
-			}()
-			go func() {
 				logger.Info("this is video track")
 				codec := remoteTrack.Codec()
 				logger.Infof("pub video codec:%v", codec)
 				confRoom.PubRemoteVideoTrack = remoteTrack
-				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
 
 				for {
-					i, _, readErr := remoteTrack.Read(rtpBuf)
+					rtpPacket, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
-						wi, err := localTrack.Write(rtpBuf[:i])
+						err := localTrack.WriteRTP(rtpPacket)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
-						} else {
-							logger.Infof("video ri:%v wi:%v:", i, wi)
 						}
 
+					}
+
+					err := videoFile.WriteRTP(rtpPacket)
+					if err != nil {
+						logger.Error(err)
+						break
 					}
 
 				}
@@ -657,26 +654,4 @@ func CreateConfRoom(name string) (*ConfRoom, error) {
 	logger.Info("CreateConfRoom end")
 
 	return newRoom, nil
-}
-
-func saveToDisk(i media.Writer, track *webrtc.TrackRemote) {
-	return
-	defer func() {
-		if err := i.Close(); err != nil {
-			logger.Error(err)
-			return
-		}
-	}()
-
-	for {
-		rtpPacket, _, err := track.ReadRTP()
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		if err := i.WriteRTP(rtpPacket); err != nil {
-			logger.Error(err)
-			return
-		}
-	}
 }
