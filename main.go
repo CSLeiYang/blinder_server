@@ -10,14 +10,17 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 	"yanglei_blinder/logger"
 
 	"github.com/gorilla/websocket"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
+
 	"github.com/pion/webrtc/v4"
+	"github.com/pion/webrtc/v4/pkg/media"
+	"github.com/pion/webrtc/v4/pkg/media/ivfwriter"
+	"github.com/pion/webrtc/v4/pkg/media/oggwriter"
 )
 
 type ConfRoom struct {
@@ -482,33 +485,37 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	confRoom.PubLocalAudioTrack = localAudioTrack
 
+	audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v.ogg", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	audioFile, err := oggwriter.New(audioFileName, 48000, 2)
+	if err != nil {
+		logger.Error(err)
+		return "", err
+	}
+
+	videoFileName := fmt.Sprintf("%s/%s_pub_video_%v.ivf", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	videoFile, err := ivfwriter.New(videoFileName)
+	if err != nil {
+		logger.Error(err)
+		return "", err
+	}
+
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
+				saveToDisk(audioFile, remoteTrack)
+			}()
+			go func() {
 				logger.Info("this is auido track")
 				codec := remoteTrack.Codec()
+				logger.Infof("pub audio codec:%v", codec)
 				confRoom.PubRemoteAudioTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
-				// 创建或打开音频录制文件
-				audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v_%v_%v_%v.raw", recordPath, confRoom.Name, strings.Split(codec.MimeType, "/")[1], codec.Channels, codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-				audioFile, err := os.OpenFile(audioFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-				if err != nil {
-					logger.Error(err)
-					return
-				}
-				defer audioFile.Close()
 
 				for {
-
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
-						return
-					}
-
-					if _, err := audioFile.Write(rtpBuf[:i]); err != nil {
-						logger.Error(err)
 						return
 					}
 
@@ -528,27 +535,20 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
 			go func() {
+				saveToDisk(videoFile, remoteTrack)
+			}()
+			go func() {
 				logger.Info("this is video track")
 				codec := remoteTrack.Codec()
+				logger.Infof("pub video codec:%v", codec)
 				confRoom.PubRemoteVideoTrack = remoteTrack
 				rtpBuf := make([]byte, 1400)
 				// 创建或打开音频录制文件
-				videoFileName := fmt.Sprintf("%s/%s_pub_video_%v_%v_%v.raw", recordPath, confRoom.Name, strings.Split(codec.MimeType, "/")[1], codec.ClockRate, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-				videoFile, err := os.OpenFile(videoFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-				if err != nil {
-					logger.Error(err)
-					return
-				}
-				defer videoFile.Close()
+
 				for {
 					i, _, readErr := remoteTrack.Read(rtpBuf)
 					if readErr != nil {
 						logger.Error(readErr)
-						return
-					}
-
-					if _, err := videoFile.Write(rtpBuf[:i]); err != nil {
-						logger.Error(err)
 						return
 					}
 
@@ -572,6 +572,8 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
+			audioFile.Close()
+			videoFile.Close()
 			peerConnection.Close()
 			delete(ConfRoomList, confRoom.Name)
 		}
@@ -655,4 +657,25 @@ func CreateConfRoom(name string) (*ConfRoom, error) {
 	logger.Info("CreateConfRoom end")
 
 	return newRoom, nil
+}
+
+func saveToDisk(i media.Writer, track *webrtc.TrackRemote) {
+	defer func() {
+		if err := i.Close(); err != nil {
+			logger.Error(err)
+			return
+		}
+	}()
+
+	for {
+		rtpPacket, _, err := track.ReadRTP()
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		if err := i.WriteRTP(rtpPacket); err != nil {
+			logger.Error(err)
+			return
+		}
+	}
 }
