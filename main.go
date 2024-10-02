@@ -660,6 +660,7 @@ func CreateConfRoom(name string) (*ConfRoom, error) {
 }
 
 func saveToDisk(i media.Writer, track *webrtc.TrackRemote) {
+	return
 	defer func() {
 		if err := i.Close(); err != nil {
 			logger.Error(err)
