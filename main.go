@@ -507,20 +507,20 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				confRoom.PubRemoteAudioTrack = remoteTrack
 
 				for {
-					rtpPacket, _, readErr := remoteTrack.ReadRTP()
+					rtpPacketA, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
 
-					err := audioFile.WriteRTP(rtpPacket)
+					err := audioFile.WriteRTP(rtpPacketA)
 					if err != nil {
 						logger.Error(err)
 						break
 					}
 
 					for _, localTrack := range confRoom.SublocalAudioTrack {
-						err := localTrack.WriteRTP(rtpPacket)
+						err := localTrack.WriteRTP(rtpPacketA)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
@@ -539,19 +539,19 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				// 创建或打开音频录制文件
 
 				for {
-					rtpPacket, _, readErr := remoteTrack.ReadRTP()
+					rtpPacketV, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
 						logger.Error(readErr)
 						return
 					}
-					err := videoFile.WriteRTP(rtpPacket)
+					err := videoFile.WriteRTP(rtpPacketV)
 					if err != nil {
 						logger.Error(err)
 						break
 					}
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
-						err := localTrack.WriteRTP(rtpPacket)
+						err := localTrack.WriteRTP(rtpPacketV)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
