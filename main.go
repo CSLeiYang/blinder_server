@@ -513,18 +513,18 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						return
 					}
 
+					err := audioFile.WriteRTP(rtpPacket)
+					if err != nil {
+						logger.Error(err)
+						break
+					}
+
 					for _, localTrack := range confRoom.SublocalAudioTrack {
 						err := localTrack.WriteRTP(rtpPacket)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
 						}
-					}
-
-					err := audioFile.WriteRTP(rtpPacket)
-					if err != nil {
-						logger.Error(err)
-						break
 					}
 
 				}
@@ -544,6 +544,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
+					err := videoFile.WriteRTP(rtpPacket)
+					if err != nil {
+						logger.Error(err)
+						break
+					}
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						err := localTrack.WriteRTP(rtpPacket)
@@ -552,12 +557,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 							break
 						}
 
-					}
-
-					err := videoFile.WriteRTP(rtpPacket)
-					if err != nil {
-						logger.Error(err)
-						break
 					}
 
 				}
