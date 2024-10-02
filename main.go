@@ -275,7 +275,12 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 		logger.Error(err)
 		return "", err
 	}
-
+	audioFileName := fmt.Sprintf("%s/%s_%s_sub_audio_%v.ogg", recordPath, userName, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	audioFileWriter, err := oggwriter.New(audioFileName, 48000, 2)
+	if err != nil {
+		logger.Error(err)
+		return "", err
+	}
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
@@ -285,6 +290,12 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 					if readErr != nil {
 						logger.Error(readErr)
 						return
+					}
+
+					err:=audioFileWriter.WriteRTP(rtpPacket)
+					if err != nil {
+						logger.Error(err)
+						break
 					}
 
 					if err = confRoom.PubLocalAudioTrack.WriteRTP(rtpPacket); err != nil && !errors.Is(err, io.ErrClosedPipe) {
@@ -303,6 +314,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 			logger.Warn("peerConnection will be close")
 			delete(confRoom.SubLocalVideoTrack, userName)
 			delete(confRoom.SublocalAudioTrack, userName)
+			audioFileWriter.Close()
 			peerConnection.Close()
 		}
 	})
