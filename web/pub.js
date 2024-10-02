@@ -27,8 +27,8 @@ async function joinSession(confName) {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: { ideal: 'environment' }, // 使用后置摄像头
-                // width: { ideal: 640 }, // 理想宽度
-                // height: { ideal: 480 }, // 理想高度
+                width: { ideal: 640 }, // 理想宽度
+                height: { ideal: 360 }, // 理想高度
                 frameRate: { ideal: 15, max: 30 }, // 最大帧率
 
             },
