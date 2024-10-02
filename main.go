@@ -275,7 +275,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 		logger.Error(err)
 		return "", err
 	}
-	audioFileName := fmt.Sprintf("%s/%s_%s_sub_audio_%v.ogg", recordPath, userName, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	audioFileName := fmt.Sprintf("%s/%s_sub_audio_%s_%v.ogg", recordPath, confRoom.Name, userName, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 	audioFileWriter, err := oggwriter.New(audioFileName, 48000, 2)
 	if err != nil {
 		logger.Error(err)
