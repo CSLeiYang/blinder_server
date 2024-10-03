@@ -91,7 +91,8 @@ async function joinSession(confName) {
                 console.log('Wake Lock active');
                 // 定期触发小的 DOM 更新
                 setInterval(() => {
-                    document.body.style.visibility = document.body.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                    document.body.style.backgroundColor = document.body.style.backgroundColor === 'lightblue' ? 'lightgreen' : 'lightblue';
+
                 }, 10000); // 每10秒更新一次可见性
             } catch (err) {
                 showError(`${err.name}, ${err.message}`);
