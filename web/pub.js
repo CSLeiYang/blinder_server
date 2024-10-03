@@ -1,18 +1,19 @@
 document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 document.getElementById('video-btn').addEventListener('click', toggleVideo);
+document.getElementById('output-btn').addEventListener('click', toggleAudioOutput); // 绑定切换按钮
 
 let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
-let wakeLock = null; // 声明唤醒锁变量
+let wakeLock = null;
+let audioOutput = 'default'; // 用于存储当前音频输出设备的 ID
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创建目标音频流
 
 // 创建一个用于显示错误信息的元素
-const errorDisplay = document.createElement('div');
-errorDisplay.style.color = 'red';
-errorDisplay.style.marginTop = '10px';
-document.body.appendChild(errorDisplay);
+const errorDisplay = document.getElementById('error-display');
 
 async function joinSession(confName) {
     const name = document.getElementById('name').value;
@@ -44,29 +45,20 @@ async function joinSession(confName) {
 
     } catch (error) {
         showError(`initLocalStream error: ${error.message}`);
-        return; // 处理错误后退出
+        return;
     }
 
+    // 将音频流连接到目标音频流
+    localStream.getAudioTracks().forEach(track => {
+        const source = audioContext.createMediaStreamSource(localStream);
+        source.connect(mediaStreamDestination);
+    });
+
+    // 添加目标音频流到对等连接
+    peerConnection.addTrack(mediaStreamDestination.stream.getAudioTracks()[0], mediaStreamDestination.stream);
+
     localStream.getTracks().forEach(track => {
-        const sender = peerConnection.addTrack(track, localStream);
-        const parameters = sender.getParameters();
-
-        if (track.kind === 'video') {
-            if (!parameters.encodings) {
-                parameters.encodings = [{}];
-            }
-            parameters.encodings[0].maxBitrate = 250000;
-            sender.setParameters(parameters);
-        }
-
-        if (track.kind === 'audio') {
-            if (!parameters.encodings) {
-                parameters.encodings = [{}];
-            }
-            parameters.encodings[0].maxBitrate = 16000;
-            parameters.encodings[0].channelCount = 1;
-            // sender.setParameters(parameters);
-        }
+        peerConnection.addTrack(track, localStream);
     });
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
@@ -85,17 +77,15 @@ async function joinSession(confName) {
         }));
     };
 
-    let iceCandidates = [];
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            iceCandidates.push(event.candidate);
+            // handle candidate
         }
     };
 
     peerConnection.oniceconnectionstatechange = async () => {
         console.log(`ICE Connection State: ${peerConnection.iceConnectionState}`);
         if (peerConnection.iceConnectionState === 'connected') {
-            // 请求屏幕唤醒锁
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
                 console.log('Wake Lock active');
@@ -150,4 +140,17 @@ function toggleVideo() {
     localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
     isVideoStopped = !isVideoStopped;
     document.getElementById('video-btn').textContent = isVideoStopped ? 'Start Video' : 'Stop Video';
+}
+
+function toggleAudioOutput() {
+    // 切换音频输出设备
+    audioOutput = audioOutput === 'default' ? 'speaker' : 'default';
+    if (audioOutput === 'speaker') {
+        // 设置扬声器
+        audioContext.destination.connect(mediaStreamDestination);
+    } else {
+        // 设置耳机
+        audioContext.destination.disconnect(mediaStreamDestination);
+    }
+    console.log(`Audio output switched to: ${audioOutput}`);
 }
