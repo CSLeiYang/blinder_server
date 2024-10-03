@@ -142,15 +142,26 @@ function toggleVideo() {
     document.getElementById('video-btn').textContent = isVideoStopped ? 'Start Video' : 'Stop Video';
 }
 
-function toggleAudioOutput() {
-    // 切换音频输出设备
-    audioOutput = audioOutput === 'default' ? 'speaker' : 'default';
-    if (audioOutput === 'speaker') {
-        // 设置扬声器
-        audioContext.destination.connect(mediaStreamDestination);
-    } else {
-        // 设置耳机
-        audioContext.destination.disconnect(mediaStreamDestination);
+// 切换音频输出设备
+async function toggleAudioOutput() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+
+    // 获取当前音频输出设备
+    audioOutputDeviceId = audioOutputDeviceId === null || audioOutputDeviceId === audioOutputs[0].deviceId
+        ? audioOutputs[1]?.deviceId // 切换到下一个设备
+        : audioOutputs[0]?.deviceId; // 否则切换回第一个设备
+
+    // 如果有可用设备，设置音频输出
+    if (audioOutputDeviceId) {
+        const localVideo = document.getElementById('local-video');
+        localVideo.setSinkId(audioOutputDeviceId)
+            .then(() => {
+                console.log(`Audio output set to device: ${audioOutputDeviceId}`);
+            })
+            .catch(error => {
+                console.error('Error setting audio output:', error);
+                showError(`Audio output error: ${error.message}`);
+            });
     }
-    console.log(`Audio output switched to: ${audioOutput}`);
 }
