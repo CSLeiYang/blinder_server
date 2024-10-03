@@ -1,13 +1,12 @@
-
 document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 document.getElementById('video-btn').addEventListener('click', toggleVideo);
-
 
 let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
+let wakeLock = null; // 声明唤醒锁变量
 
 async function joinSession(confName) {
     const name = document.getElementById('name').value;
@@ -26,11 +25,10 @@ async function joinSession(confName) {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: 'environment' }, // 使用后置摄像头
-                width: { ideal: 640 }, // 理想宽度
-                height: { ideal: 360 }, // 理想高度
-                frameRate: { ideal: 15, max: 30 }, // 最大帧率
-
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 640 },
+                height: { ideal: 360 },
+                frameRate: { ideal: 15, max: 30 },
             },
             audio: {
                 channelCount: 1,
@@ -39,8 +37,8 @@ async function joinSession(confName) {
         });
 
     } catch (error) {
-        alert(`initLocalStream error: ${error}`)
-
+        alert(`initLocalStream error: ${error}`);
+        return; // 处理错误后退出
     }
 
     localStream.getTracks().forEach(track => {
@@ -51,7 +49,7 @@ async function joinSession(confName) {
             if (!parameters.encodings) {
                 parameters.encodings = [{}];
             }
-            parameters.encodings[0].maxBitrate = 250000; // 设置最大码率为1Mbps
+            parameters.encodings[0].maxBitrate = 250000;
             sender.setParameters(parameters);
         }
 
@@ -59,11 +57,10 @@ async function joinSession(confName) {
             if (!parameters.encodings) {
                 parameters.encodings = [{}];
             }
-            parameters.encodings[0].maxBitrate = 16000; // 设置音频最大码率为16kbps
+            parameters.encodings[0].maxBitrate = 16000;
             parameters.encodings[0].channelCount = 1;
             // sender.setParameters(parameters);
         }
-
     });
 
     const ws = new WebSocket(`wss://${window.location.host}/ws`);
@@ -89,27 +86,33 @@ async function joinSession(confName) {
         }
     };
 
-    peerConnection.oniceconnectionstatechange = () => {
+    peerConnection.oniceconnectionstatechange = async () => {
         console.log(`ICE Connection State: ${peerConnection.iceConnectionState}`);
+        if (peerConnection.iceConnectionState === 'connected') {
+            // 请求屏幕唤醒锁
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
     };
 
     peerConnection.ontrack = (event) => {
-        const el = document.createElement(event.track.kind)
-        el.srcObject = event.streams[0]
-        el.autoplay = true
-        el.controls = true
-        document.getElementById('remote-videos').appendChild(el)
-
+        const el = document.createElement(event.track.kind);
+        el.srcObject = event.streams[0];
+        el.autoplay = true;
+        el.controls = true;
+        document.getElementById('remote-videos').appendChild(el);
     };
 
-    //Show video
     const localVideo = document.createElement('video');
-    localVideo.id = 'local-video'; // Add an ID for styling
+    localVideo.id = 'local-video';
     localVideo.srcObject = localStream;
     localVideo.autoplay = true;
     localVideo.muted = true;
     document.getElementById('local-video-container').appendChild(localVideo);
-
 
     ws.onmessage = async (event) => {
         const jsonObject = JSON.parse(event.data);
@@ -124,10 +127,7 @@ async function joinSession(confName) {
                 break;
         }
     };
-
-
 }
-
 
 function toggleMute() {
     localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
@@ -140,5 +140,3 @@ function toggleVideo() {
     isVideoStopped = !isVideoStopped;
     document.getElementById('video-btn').textContent = isVideoStopped ? 'Start Video' : 'Stop Video';
 }
-
-
