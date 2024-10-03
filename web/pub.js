@@ -8,10 +8,16 @@ let isMuted = false;
 let isVideoStopped = false;
 let wakeLock = null; // 声明唤醒锁变量
 
+// 创建一个用于显示错误信息的元素
+const errorDisplay = document.createElement('div');
+errorDisplay.style.color = 'red';
+errorDisplay.style.marginTop = '10px';
+document.body.appendChild(errorDisplay);
+
 async function joinSession(confName) {
     const name = document.getElementById('name').value;
     if (!name) {
-        alert('Please enter your name');
+        showError('Please enter your name');
         return;
     }
 
@@ -37,7 +43,7 @@ async function joinSession(confName) {
         });
 
     } catch (error) {
-        alert(`initLocalStream error: ${error}`);
+        showError(`initLocalStream error: ${error.message}`);
         return; // 处理错误后退出
     }
 
@@ -94,7 +100,7 @@ async function joinSession(confName) {
                 wakeLock = await navigator.wakeLock.request('screen');
                 console.log('Wake Lock active');
             } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
+                showError(`${err.name}, ${err.message}`);
             }
         }
     };
@@ -127,6 +133,11 @@ async function joinSession(confName) {
                 break;
         }
     };
+}
+
+// 显示错误信息的函数
+function showError(message) {
+    errorDisplay.textContent = message; // 更新错误信息
 }
 
 function toggleMute() {
