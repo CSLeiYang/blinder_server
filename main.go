@@ -559,7 +559,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				for range ticker.C {
 					errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
 					if errSend != nil {
-						fmt.Println(errSend)
+						logger.Error(errSend)
 					}
 				}
 			}()

@@ -8,7 +8,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 	"yanglei_blinder/logger"
@@ -45,7 +44,7 @@ func newWebmSaver(fileName string) *webmSaver {
 }
 
 func (s *webmSaver) Close() {
-	fmt.Printf("Finalizing webm...\n")
+	logger.Info("Finalizing webm..")
 	if s.audioWriter != nil {
 		if err := s.audioWriter.Close(); err != nil {
 			logger.Error(err)
@@ -120,7 +119,7 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 	videoKeyframe := (data[4] & naluTypeBitmask) == naluTypeSPS
 	if s.videoWriter == nil && videoKeyframe {
 		if s.videoWriter == nil || s.audioWriter == nil {
-			s.InitWriter(s.filenName,true, 1280, 720)
+			s.InitWriter(s.filenName, true, 1280, 720)
 		}
 	}
 
@@ -170,7 +169,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
-	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -210,7 +209,7 @@ func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) 
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("WebM saver has started with video width=%d, height=%d\n", width, height)
+	logger.Info("WebM saver has started with video width=%d, height=%d\n", width, height)
 	s.audioWriter = ws[0]
 	s.videoWriter = ws[1]
 }
