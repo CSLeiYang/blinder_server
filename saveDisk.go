@@ -120,7 +120,7 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 	videoKeyframe := (data[4] & naluTypeBitmask) == naluTypeSPS
 	if s.videoWriter == nil && videoKeyframe {
 		if s.videoWriter == nil || s.audioWriter == nil {
-			s.InitWriter(true, 1280, 720)
+			s.InitWriter(s.filenName,true, 1280, 720)
 		}
 	}
 
@@ -156,7 +156,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			height := int((raw >> 16) & 0x3FFF)
 
 			if s.videoWriter == nil || s.audioWriter == nil {
-				s.InitWriter(false, width, height)
+				s.InitWriter(s.filenName, false, width, height)
 			}
 		}
 		if s.videoWriter != nil {
@@ -169,7 +169,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	}
 }
 
-func (s *webmSaver) InitWriter(isH264 bool, width, height int) {
+func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
 	w, err := os.OpenFile("test.webm", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		logger.Error(err)
