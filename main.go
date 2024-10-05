@@ -555,13 +555,13 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						}
 
 					}
-					switch codec.MimeType {
-					case webrtc.MimeTypeVP8:
-						recordSaver.PushVP8(rtpPacketV)
-					case webrtc.MimeTypeH264:
-						recordSaver.PushH264(rtpPacketV)
+					// switch codec.MimeType {
+					// case webrtc.MimeTypeVP8:
+					// 	recordSaver.PushVP8(rtpPacketV)
+					// case webrtc.MimeTypeH264:
+					// 	recordSaver.PushH264(rtpPacketV)
 
-					}
+					// }
 
 				}
 
