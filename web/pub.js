@@ -33,7 +33,7 @@ async function joinSession(confName) {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: { ideal: 'environment' },
-                width: { exact: 640 },
+                width: { ideal: 640 },
                 // height: { ideal: 360 },
                 // frameRate: { ideal: 15, max: 30 },
             },

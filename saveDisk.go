@@ -154,7 +154,8 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			width := int(raw & 0x3FFF)
 			height := int((raw >> 16) & 0x3FFF)
 
-			if s.videoWriter == nil || s.audioWriter == nil {
+			// Initialize the writer if it's not initialized or if the resolution has changed.
+			if s.videoWriter == nil || s.audioWriter == nil || (s.audioWriter != nil && (s.videoWriter.Width() != width || s.videoWriter.Height() != height)) {
 				s.InitWriter(s.filenName, false, width, height)
 			}
 		}
@@ -167,6 +168,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 		}
 	}
 }
+
 
 func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
 	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o666)
