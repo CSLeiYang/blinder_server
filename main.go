@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
+
 	// "github.com/pion/rtcp"
 
 	"github.com/pion/webrtc/v4"
@@ -532,16 +533,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 			}()
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
-			// // Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
-			// go func() {
-			// 	ticker := time.NewTicker(time.Second * 3)
-			// 	for range ticker.C {
-			// 		errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
-			// 		if errSend != nil {
-			// 			logger.Error(errSend)
-			// 		}
-			// 	}
-			// }()
 			go func() {
 				logger.Info("pub video track")
 				codec := remoteTrack.Codec()
@@ -556,20 +547,19 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						return
 					}
 
-					switch codec.MimeType {
-					case webrtc.MimeTypeVP8:
-						recordSaver.PushVP8(rtpPacketV)
-					case webrtc.MimeTypeH264:
-						recordSaver.PushH264(rtpPacketV)
-
-					}
-
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						err := localTrack.WriteRTP(rtpPacketV)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
 						}
+
+					}
+					switch codec.MimeType {
+					case webrtc.MimeTypeVP8:
+						recordSaver.PushVP8(rtpPacketV)
+					case webrtc.MimeTypeH264:
+						recordSaver.PushH264(rtpPacketV)
 
 					}
 
