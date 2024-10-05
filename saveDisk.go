@@ -148,6 +148,7 @@ func (s *webmSaver) StartVP8() {
 		for {
 			sample := s.vp8Builder.Pop()
 			if sample == nil {
+				logger.Info("sample is nil")
 				continue
 			}
 			// Read VP8 header.
