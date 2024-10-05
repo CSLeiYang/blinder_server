@@ -148,6 +148,8 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.vp8Builder.Push(rtpPacket)
 }
 
@@ -159,7 +161,9 @@ func (s *webmSaver) StartPushVP8() {
 			if s.done {
 				return
 			}
+			s.mu.Lock()
 			sample := s.vp8Builder.Pop()
+			s.mu.Unlock()
 			if sample == nil {
 				continue
 			}
@@ -176,13 +180,11 @@ func (s *webmSaver) StartPushVP8() {
 					logger.Infof("Resolution change detected: (%dx%d)-> %dx%d", s.width, s.height, width, height)
 				}
 
-				s.mu.Lock()
 				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
 					s.InitWriter(s.filenName, false, width, height)
 				}
 				s.width = width
 				s.height = height
-				s.mu.Unlock()
 
 			} else {
 				logger.Info("Received a non-keyframe (VP8).")
