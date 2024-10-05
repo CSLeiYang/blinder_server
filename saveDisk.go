@@ -34,6 +34,7 @@ type webmSaver struct {
 	h264JitterBuffer   *jitterbuffer.JitterBuffer
 	lastVideoTimestamp uint32
 	width, height      int
+	done bool
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -44,6 +45,7 @@ func newWebmSaver(fileName string) *webmSaver {
 		h264JitterBuffer: jitterbuffer.New(),
 		width:            640,
 		height:           360,
+		done: false,
 	}
 }
 
@@ -61,6 +63,7 @@ func (s *webmSaver) Close() {
 			return
 		}
 	}
+	s.done=true
 }
 
 func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
@@ -151,6 +154,9 @@ func (s *webmSaver) StartPushVP8() {
 		logger.Info("StartPushVP8")
 		defer logger.Info("StartPushVP8 quit")
 		for {
+			if s.done {
+				return
+			}
 			sample := s.vp8Builder.Pop()
 			if sample == nil {
 				continue

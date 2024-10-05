@@ -565,6 +565,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						}
 
 					}
+					logger.Info("pub video record")
 					switch codec.MimeType {
 					case webrtc.MimeTypeVP8:
 						recordSaver.PushVP8(rtpPacketV)
