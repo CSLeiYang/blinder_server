@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
+	"github.com/pion/rtcp"
 
 	"github.com/pion/webrtc/v4"
 	"github.com/pion/webrtc/v4/pkg/media/ivfwriter"
@@ -552,6 +553,16 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 			}()
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
+			// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+			go func() {
+				ticker := time.NewTicker(time.Second * 3)
+				for range ticker.C {
+					errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
+					if errSend != nil {
+						fmt.Println(errSend)
+					}
+				}
+			}()
 			go func() {
 				logger.Info("pub video track")
 				codec := remoteTrack.Codec()
