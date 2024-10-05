@@ -503,6 +503,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 	recordSaver := newWebmSaver(recordFileName)
+	recordSaver.StartPushVP8()
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)
@@ -559,7 +560,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 							logger.Error(err)
 							break
-						}else{
+						} else {
 							logger.Info("pub video writeRtp success")
 						}
 
