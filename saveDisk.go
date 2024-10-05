@@ -161,9 +161,7 @@ func (s *webmSaver) StartPushVP8() {
 			if s.done {
 				return
 			}
-			s.mu.Lock()
 			sample := s.vp8Builder.Pop()
-			s.mu.Unlock()
 			if sample == nil {
 				continue
 			}
@@ -190,13 +188,16 @@ func (s *webmSaver) StartPushVP8() {
 				logger.Info("Received a non-keyframe (VP8).")
 			}
 
+			s.mu.Lock()
 			if s.videoWriter != nil {
 				s.videoTimestamp += sample.Duration
 				if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
 					logger.Error(err)
+					s.mu.Unlock()
 					return
 				}
 			}
+			s.mu.Unlock()
 		}
 	}()
 }
