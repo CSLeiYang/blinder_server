@@ -292,7 +292,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 						return
 					}
 
-					err:=audioFileWriter.WriteRTP(rtpPacket)
+					err := audioFileWriter.WriteRTP(rtpPacket)
 					if err != nil {
 						logger.Error(err)
 						break
@@ -509,6 +509,13 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 
+	recordFileName := fmt.Sprintf("%s/%s_pub%v.webm", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	if err != nil {
+		logger.Error(err)
+		return "", err
+	}
+	recordSaver := newWebmSaver(recordFileName)
+
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
@@ -530,6 +537,8 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(err)
 						break
 					}
+
+					recordSaver.PushOpus(rtpPacketA)
 
 					for _, localTrack := range confRoom.SublocalAudioTrack {
 						err := localTrack.WriteRTP(rtpPacketA)
@@ -562,6 +571,14 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						break
 					}
 
+					switch codec.MimeType {
+					case webrtc.MimeTypeVP8:
+						recordSaver.PushVP8(rtpPacketV)
+					case webrtc.MimeTypeH264:
+						recordSaver.PushH264(rtpPacketV)
+
+					}
+
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						err := localTrack.WriteRTP(rtpPacketV)
 						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
@@ -583,6 +600,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 			audioFile.Close()
 			videoFile.Close()
 			peerConnection.Close()
+			recordSaver.Close()
 			delete(ConfRoomList, confRoom.Name)
 		}
 	})

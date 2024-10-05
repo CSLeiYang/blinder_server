@@ -87,13 +87,14 @@ async function joinSession(confName) {
         console.log(`ICE Connection State: ${peerConnection.iceConnectionState}`);
         if (peerConnection.iceConnectionState === 'connected') {
             try {
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock active');
                 // 定期触发小的 DOM 更新
                 setInterval(() => {
                     document.body.style.backgroundColor = document.body.style.backgroundColor === 'lightblue' ? 'lightgreen' : 'lightblue';
 
                 }, 10000); // 每10秒更新一次可见性
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+
             } catch (err) {
                 showError(`${err.name}, ${err.message}`);
             }
