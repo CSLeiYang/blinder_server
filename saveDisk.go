@@ -156,7 +156,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			height := int((raw >> 16) & 0x3FFF)
 
 			// Initialize the writer if it's not initialized or if the resolution has changed.
-			if s.videoWriter == nil || s.audioWriter == nil || (s.audioWriter != nil && (s.videoWriter.Width() != width || s.videoWriter.Height() != height)) {
+			if s.videoWriter == nil || s.audioWriter == nil || (s.audioWriter != nil && (s.width != width || s.height != height)) {
 				s.InitWriter(s.filenName, false, width, height)
 			}
 			// 更新当前的分辨率
