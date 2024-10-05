@@ -16,10 +16,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
-	"github.com/pion/rtcp"
+	// "github.com/pion/rtcp"
 
 	"github.com/pion/webrtc/v4"
-	"github.com/pion/webrtc/v4/pkg/media/ivfwriter"
 	"github.com/pion/webrtc/v4/pkg/media/oggwriter"
 )
 
@@ -496,20 +495,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	confRoom.PubLocalAudioTrack = localAudioTrack
 
-	audioFileName := fmt.Sprintf("%s/%s_pub_audio_%v.ogg", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-	audioFile, err := oggwriter.New(audioFileName, 48000, 2)
-	if err != nil {
-		logger.Error(err)
-		return "", err
-	}
-
-	videoFileName := fmt.Sprintf("%s/%s_pub_video_%v.ivf", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-	videoFile, err := ivfwriter.New(videoFileName)
-	if err != nil {
-		logger.Error(err)
-		return "", err
-	}
-
 	recordFileName := fmt.Sprintf("%s/%s_pub_%v.webm", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 	if err != nil {
 		logger.Error(err)
@@ -531,12 +516,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					if readErr != nil {
 						logger.Error(readErr)
 						return
-					}
-
-					err := audioFile.WriteRTP(rtpPacketA)
-					if err != nil {
-						logger.Error(err)
-						break
 					}
 
 					recordSaver.PushOpus(rtpPacketA)
@@ -576,11 +555,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-					err := videoFile.WriteRTP(rtpPacketV)
-					if err != nil {
-						logger.Error(err)
-						break
-					}
 
 					switch codec.MimeType {
 					case webrtc.MimeTypeVP8:
@@ -608,8 +582,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
-			audioFile.Close()
-			videoFile.Close()
 			peerConnection.Close()
 			recordSaver.Close()
 			delete(ConfRoomList, confRoom.Name)
