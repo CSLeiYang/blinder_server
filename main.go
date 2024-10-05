@@ -553,16 +553,16 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 			}()
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
-			// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
-			go func() {
-				ticker := time.NewTicker(time.Second * 3)
-				for range ticker.C {
-					errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
-					if errSend != nil {
-						logger.Error(errSend)
-					}
-				}
-			}()
+			// // Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+			// go func() {
+			// 	ticker := time.NewTicker(time.Second * 3)
+			// 	for range ticker.C {
+			// 		errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
+			// 		if errSend != nil {
+			// 			logger.Error(errSend)
+			// 		}
+			// 	}
+			// }()
 			go func() {
 				logger.Info("pub video track")
 				codec := remoteTrack.Codec()
