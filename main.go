@@ -502,6 +502,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 	recordSaver := newWebmSaver(recordFileName)
+	recordSaver.StartVP8()
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)

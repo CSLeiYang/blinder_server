@@ -141,11 +141,13 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
+}
 
+func (s* webmSaver)  StartVP8(){
 	for {
 		sample := s.vp8Builder.Pop()
 		if sample == nil {
-			return
+			continue
 		}
 		// Read VP8 header.
 		videoKeyframe := (sample.Data[0]&0x1 == 0)
