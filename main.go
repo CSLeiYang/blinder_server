@@ -541,7 +541,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				codec := remoteTrack.Codec()
 				logger.Infof("pub video codec:%v", codec)
 				confRoom.PubRemoteVideoTrack = remoteTrack
-				errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())}})
+				errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(remoteTrack.SSRC())}})
 				if errSend != nil {
 					logger.Error(errSend)
 				}

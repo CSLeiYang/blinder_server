@@ -40,7 +40,7 @@ func newWebmSaver(fileName string) *webmSaver {
 	return &webmSaver{
 		filenName:        fileName,
 		audioBuilder:     samplebuilder.New(10, &codecs.OpusPacket{}, 48000),
-		vp8Builder:       samplebuilder.New(10, &codecs.VP8Packet{}, 90000),
+		vp8Builder:       samplebuilder.New(100, &codecs.VP8Packet{}, 90000),
 		h264JitterBuffer: jitterbuffer.New(),
 		width: 640,
 		height: 360,
