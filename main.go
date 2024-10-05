@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
+	"github.com/pion/rtcp"
 
 	// "github.com/pion/rtcp"
 
@@ -496,7 +497,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	confRoom.PubLocalAudioTrack = localAudioTrack
 
-	recordFileName := fmt.Sprintf("%s/%s_pub_%v.webm", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	recordFileName := fmt.Sprintf("%s/%s_pub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 	if err != nil {
 		logger.Error(err)
 		return "", err
@@ -540,8 +541,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				codec := remoteTrack.Codec()
 				logger.Infof("pub video codec:%v", codec)
 				confRoom.PubRemoteVideoTrack = remoteTrack
+				errSend := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())}})
+				if errSend != nil {
+					logger.Error(errSend)
+				}
 				// 创建或打开音频录制文件
-
 				for {
 					rtpPacketV, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
