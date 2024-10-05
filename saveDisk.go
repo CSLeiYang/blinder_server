@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 	"yanglei_blinder/logger"
 
@@ -35,6 +36,7 @@ type webmSaver struct {
 	lastVideoTimestamp uint32
 	width, height      int
 	done               bool
+	mu                 sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -174,11 +176,14 @@ func (s *webmSaver) StartPushVP8() {
 					logger.Infof("Resolution change detected: (%dx%d)-> %dx%d", s.width, s.height, width, height)
 				}
 
+				s.mu.Lock()
 				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
 					s.InitWriter(s.filenName, false, width, height)
 				}
 				s.width = width
 				s.height = height
+				s.mu.Unlock()
+
 			} else {
 				logger.Info("Received a non-keyframe (VP8).")
 			}
@@ -196,6 +201,8 @@ func (s *webmSaver) StartPushVP8() {
 
 func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height int) {
 	// 生成新的文件名，包含分辨率信息
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	fileName := fmt.Sprintf("%s_%dx%d.webm", baseFileName, width, height)
 
 	// 仅在未初始化或分辨率已更改时初始化写入器
