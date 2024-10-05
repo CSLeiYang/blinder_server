@@ -507,6 +507,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		logger.Info("OnTrack comming....", remoteTrack)
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
+				defer logger.Info("pub audio track quit")
 				logger.Info("pub auido track")
 				codec := remoteTrack.Codec()
 				logger.Infof("pub audio codec:%v", codec)
@@ -534,6 +535,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		}
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeVideo {
 			go func() {
+				defer logger.Info("pub video track quit")
 				logger.Info("pub video track")
 				codec := remoteTrack.Codec()
 				logger.Infof("pub video codec:%v", codec)
