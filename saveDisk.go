@@ -32,6 +32,7 @@ type webmSaver struct {
 
 	h264JitterBuffer   *jitterbuffer.JitterBuffer
 	lastVideoTimestamp uint32
+	width, height      int
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -158,6 +159,9 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			if s.videoWriter == nil || s.audioWriter == nil || (s.audioWriter != nil && (s.videoWriter.Width() != width || s.videoWriter.Height() != height)) {
 				s.InitWriter(s.filenName, false, width, height)
 			}
+			// 更新当前的分辨率
+			s.width = width
+			s.height = height
 		}
 		if s.videoWriter != nil {
 			s.videoTimestamp += sample.Duration
@@ -168,7 +172,6 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 		}
 	}
 }
-
 
 func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
 	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o666)
@@ -211,7 +214,10 @@ func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) 
 	if err != nil {
 		panic(err)
 	}
-	logger.Info("WebM saver has started with video width=%d, height=%d\n", width, height)
+	logger.Infof("WebM saver has started with video width=%d, height=%d\n", width, height)
 	s.audioWriter = ws[0]
 	s.videoWriter = ws[1]
+	// 更新当前分辨率
+	s.width = width
+	s.height = height
 }
