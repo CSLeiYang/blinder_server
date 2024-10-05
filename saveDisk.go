@@ -161,8 +161,10 @@ func (s *webmSaver) StartPushVP8() {
 			if s.done {
 				return
 			}
+			s.mu.Lock()
 			sample := s.vp8Builder.Pop()
 			if sample == nil {
+				s.mu.Unlock()
 				continue
 			}
 			// Read VP8 header.
@@ -188,7 +190,6 @@ func (s *webmSaver) StartPushVP8() {
 				logger.Info("Received a non-keyframe (VP8).")
 			}
 
-			s.mu.Lock()
 			if s.videoWriter != nil {
 				s.videoTimestamp += sample.Duration
 				if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
@@ -204,8 +205,6 @@ func (s *webmSaver) StartPushVP8() {
 
 func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height int) {
 	// 生成新的文件名，包含分辨率信息
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	fileName := fmt.Sprintf("%s_%dx%d.webm", baseFileName, width, height)
 
 	// 仅在未初始化或分辨率已更改时初始化写入器
