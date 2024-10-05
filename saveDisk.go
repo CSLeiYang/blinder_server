@@ -8,6 +8,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 	"yanglei_blinder/logger"
@@ -141,44 +142,62 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
-	go func() {
-		for {
-			sample := s.vp8Builder.Pop()
-			if sample == nil {
-				logger.Info("sample is nil")
+	for {
+		sample := s.vp8Builder.Pop()
+		if sample == nil {
+			return
+		}
+		// Read VP8 header.
+		videoKeyframe := (sample.Data[0]&0x1 == 0)
+		if videoKeyframe {
+			// Keyframe has frame information.
+			raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
+			width := int(raw & 0x3FFF)
+			height := int((raw >> 16) & 0x3FFF)
+
+			if s.width != width || s.height != height {
+				logger.Infof("ow:%d, oh:%d, nw:%d, nh:%d", s.width, s.height, width, height)
+			}
+			// Initialize the writer if it's not initialized or if the resolution has changed.
+			if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
+				s.InitWriter(s.filenName, false, width, height)
+			}
+			// 更新当前的分辨率
+			s.width = width
+			s.height = height
+		}
+		if s.videoWriter != nil {
+			s.videoTimestamp += sample.Duration
+			if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
+				logger.Error(err)
 				return
 			}
-			// Read VP8 header.
-			videoKeyframe := (sample.Data[0]&0x1 == 0)
-			if videoKeyframe {
-				// Keyframe has frame information.
-				raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
-				width := int(raw & 0x3FFF)
-				height := int((raw >> 16) & 0x3FFF)
-
-				if s.width != width || s.height != height {
-					logger.Infof("ow:%d, oh:%d, nw:%d, nh:%d", s.width, s.height, width, height)
-				}
-				// Initialize the writer if it's not initialized or if the resolution has changed.
-				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
-					s.InitWriter(s.filenName, false, width, height)
-				}
-				// 更新当前的分辨率
-				s.width = width
-				s.height = height
-			}
-			if s.videoWriter != nil {
-				s.videoTimestamp += sample.Duration
-				if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
-					logger.Error(err)
-					return
-				}
-			}
 		}
-	}()
+	}
 }
 
-func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
+func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height int) {
+	// 生成新的文件名，包含分辨率信息
+	fileName := fmt.Sprintf("%s_%dx%d.webm", baseFileName, width, height)
+
+	// 仅在未初始化或分辨率已更改时初始化写入器
+	if s.videoWriter != nil && s.audioWriter != nil && s.width == width && s.height == height {
+		return // 无需重新初始化
+	}
+
+	if s.audioWriter != nil {
+		// 关闭现有的写入器
+		if err := s.audioWriter.Close(); err != nil {
+			logger.Error(err)
+		}
+	}
+	if s.videoWriter != nil {
+		if err := s.videoWriter.Close(); err != nil {
+			logger.Error(err)
+		}
+	}
+
+	// 打开新的文件以进行写入
 	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
 		logger.Error(err)
@@ -190,6 +209,7 @@ func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) 
 		videoMimeType = "V_MPEG4/ISO/AVC"
 	}
 
+	// 初始化 WebM 写入器
 	ws, err := webm.NewSimpleBlockWriter(w,
 		[]webm.TrackEntry{
 			{
