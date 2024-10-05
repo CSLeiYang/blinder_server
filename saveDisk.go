@@ -170,7 +170,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
-	w, err := os.OpenFile("test.webm", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	w, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		logger.Error(err)
 		return

@@ -509,7 +509,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 
-	recordFileName := fmt.Sprintf("%s/%s_pub%v.webm", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	recordFileName := fmt.Sprintf("%s/%s_pub_%v.webm", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 	if err != nil {
 		logger.Error(err)
 		return "", err
