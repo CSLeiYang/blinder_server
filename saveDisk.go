@@ -141,16 +141,12 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
-}
-
-func (s *webmSaver) StartVP8() {
 	go func() {
 		for {
 			sample := s.vp8Builder.Pop()
 			if sample == nil {
 				logger.Info("sample is nil")
-				time.Sleep(time.Millisecond * 100) // 等待一段时间再重试
-				continue
+				return
 			}
 			// Read VP8 header.
 			videoKeyframe := (sample.Data[0]&0x1 == 0)
@@ -180,7 +176,6 @@ func (s *webmSaver) StartVP8() {
 			}
 		}
 	}()
-
 }
 
 func (s *webmSaver) InitWriter(fileName string, isH264 bool, width, height int) {
