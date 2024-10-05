@@ -42,8 +42,8 @@ func newWebmSaver(fileName string) *webmSaver {
 		audioBuilder:     samplebuilder.New(10, &codecs.OpusPacket{}, 48000),
 		vp8Builder:       samplebuilder.New(100, &codecs.VP8Packet{}, 90000),
 		h264JitterBuffer: jitterbuffer.New(),
-		width: 640,
-		height: 360,
+		width:            640,
+		height:           360,
 	}
 }
 
@@ -144,41 +144,43 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
-	for {
-		sample := s.vp8Builder.Pop()
-		if sample == nil {
-			return
-		}
-		// Read VP8 header.
-		videoKeyframe := (sample.Data[0]&0x1 == 0)
-		if videoKeyframe {
-			logger.Info("Received a keyframe (VP8).")
-			// Keyframe has frame information.
-			raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
-			width := int(raw & 0x3FFF)
-			height := int((raw >> 16) & 0x3FFF)
-
-			if s.width != width || s.height != height {
-				logger.Infof("Resolution change detected: %dx%d", width, height)
-			}
-
-			if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
-				s.InitWriter(s.filenName, false, width, height)
-			}
-			s.width = width
-			s.height = height
-		} else {
-			logger.Info("Received a non-keyframe (VP8).")
-		}
-
-		if s.videoWriter != nil {
-			s.videoTimestamp += sample.Duration
-			if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
-				logger.Error(err)
+	go func() {
+		for {
+			sample := s.vp8Builder.Pop()
+			if sample == nil {
 				return
 			}
+			// Read VP8 header.
+			videoKeyframe := (sample.Data[0]&0x1 == 0)
+			if videoKeyframe {
+				logger.Info("Received a keyframe (VP8).")
+				// Keyframe has frame information.
+				raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
+				width := int(raw & 0x3FFF)
+				height := int((raw >> 16) & 0x3FFF)
+
+				if s.width != width || s.height != height {
+					logger.Infof("Resolution change detected: %dx%d", width, height)
+				}
+
+				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
+					s.InitWriter(s.filenName, false, width, height)
+				}
+				s.width = width
+				s.height = height
+			} else {
+				logger.Info("Received a non-keyframe (VP8).")
+			}
+
+			if s.videoWriter != nil {
+				s.videoTimestamp += sample.Duration
+				if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
+					logger.Error(err)
+					return
+				}
+			}
 		}
-	}
+	}()
 }
 
 func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height int) {
