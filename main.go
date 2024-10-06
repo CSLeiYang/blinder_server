@@ -535,21 +535,20 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-					select {
-					case snapShotChan <- rtpPacketV:
-					default:
-						for _, localTrack := range confRoom.SubLocalVideoTrack {
-							err := localTrack.WriteRTP(rtpPacketV)
-							if err != nil && !errors.Is(err, io.EOF) {
-								logger.Error(err)
-								break
-							}
-						}
-						switch codec.MimeType {
-						case webrtc.MimeTypeVP8:
-							recordSaver.PushVP8(rtpPacketV)
+
+					for _, localTrack := range confRoom.SubLocalVideoTrack {
+						err := localTrack.WriteRTP(rtpPacketV)
+						if err != nil && !errors.Is(err, io.EOF) {
+							logger.Error(err)
+							break
 						}
 					}
+					switch codec.MimeType {
+					case webrtc.MimeTypeVP8:
+						recordSaver.PushVP8(rtpPacketV)
+					}
+					snapShotChan <- rtpPacketV
+
 				}
 
 			}()
