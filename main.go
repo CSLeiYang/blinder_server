@@ -17,6 +17,7 @@ import (
 	"github.com/pion/interceptor"
 	"github.com/pion/interceptor/pkg/intervalpli"
 	"github.com/pion/rtcp"
+	"github.com/pion/rtp"
 
 	// "github.com/pion/rtcp"
 
@@ -452,26 +453,6 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		return "", err
 	}
 
-	// localVideoTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8}, "video", "pion")
-	// if newTrackErr != nil {
-	// 	logger.Error(newTrackErr)
-	// 	return "", newTrackErr
-	// }
-
-	// rtpVideoSender, err := peerConnection.AddTrack(localVideoTrack)
-	// if err != nil {
-	// 	logger.Error(err)
-	// 	return "", err
-	// }
-	// go func() {
-	// 	rtcpBuf := make([]byte, 1500)
-	// 	for {
-	// 		if _, _, rtcpErr := rtpVideoSender.Read(rtcpBuf); rtcpErr != nil {
-	// 			return
-	// 		}
-	// 	}
-	// }()
-
 	localAudioTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus}, "audio", "pion")
 	if err != nil {
 		logger.Error(err)
@@ -541,6 +522,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 				if errSend != nil {
 					logger.Error(errSend)
 				}
+				snapShotChan := make(chan *rtp.Packet)
+				go func() {
+					Snapshot(snapShotChan, recordPath, confRoom.Name)
+				}()
+
 				// 创建或打开音频录制文件
 				for {
 					rtpPacketV, _, readErr := remoteTrack.ReadRTP()
@@ -548,20 +534,20 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-
-					for _, localTrack := range confRoom.SubLocalVideoTrack {
-						err := localTrack.WriteRTP(rtpPacketV)
-						if err != nil && !errors.Is(err, io.EOF) {
-							logger.Error(err)
-							break
+					select {
+					case snapShotChan <- rtpPacketV:
+					default:
+						for _, localTrack := range confRoom.SubLocalVideoTrack {
+							err := localTrack.WriteRTP(rtpPacketV)
+							if err != nil && !errors.Is(err, io.EOF) {
+								logger.Error(err)
+								break
+							}
 						}
-					}
-					switch codec.MimeType {
-					case webrtc.MimeTypeVP8:
-						recordSaver.PushVP8(rtpPacketV)
-					case webrtc.MimeTypeH264:
-						recordSaver.PushH264(rtpPacketV)
-
+						switch codec.MimeType {
+						case webrtc.MimeTypeVP8:
+							recordSaver.PushVP8(rtpPacketV)
+						}
 					}
 				}
 

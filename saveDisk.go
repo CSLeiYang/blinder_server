@@ -85,66 +85,6 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 	}
 }
 
-func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
-	s.h264JitterBuffer.Push(rtpPacket)
-
-	pkt, err := s.h264JitterBuffer.Peek(true)
-	if err != nil {
-		return
-	}
-
-	pkts := []*rtp.Packet{pkt}
-	for {
-		pkt, err = s.h264JitterBuffer.PeekAtSequence(pkts[len(pkts)-1].SequenceNumber + 1)
-		if err != nil {
-			return
-		}
-
-		// We have popped a whole frame, lets write it
-		if pkts[0].Timestamp != pkt.Timestamp {
-			break
-		}
-
-		pkts = append(pkts, pkt)
-	}
-
-	h264Packet := &codecs.H264Packet{}
-	data := []byte{}
-	for i := range pkts {
-		if _, err = s.h264JitterBuffer.PopAtSequence(pkts[i].SequenceNumber); err != nil {
-			logger.Error(err)
-			return
-		}
-
-		out, err := h264Packet.Unmarshal(pkts[i].Payload)
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-		data = append(data, out...)
-	}
-
-	videoKeyframe := (data[4] & naluTypeBitmask) == naluTypeSPS
-	if s.videoWriter == nil && videoKeyframe {
-		if s.videoWriter == nil || s.audioWriter == nil {
-			s.InitWriter(s.filenName, true, 1280, 720)
-		}
-	}
-
-	samples := uint32(0)
-	if s.lastVideoTimestamp != 0 {
-		samples = pkts[0].Timestamp - s.lastVideoTimestamp
-	}
-	s.lastVideoTimestamp = pkts[0].Timestamp
-
-	if s.videoWriter != nil {
-		s.videoTimestamp += time.Duration(float64(samples) / float64(90000) * float64(time.Second))
-		if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), data); err != nil {
-			logger.Error(err)
-			return
-		}
-	}
-}
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
