@@ -10,7 +10,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sync"
 	"time"
 	"yanglei_blinder/logger"
 
