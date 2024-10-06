@@ -15,7 +15,6 @@ import (
 	"yanglei_blinder/logger"
 
 	"github.com/at-wat/ebml-go/webm"
-	"github.com/pion/interceptor/pkg/jitterbuffer"
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
 	"github.com/pion/webrtc/v3/pkg/media/samplebuilder"
@@ -32,25 +31,24 @@ type webmSaver struct {
 	audioBuilder, vp8Builder       *samplebuilder.SampleBuilder
 	audioTimestamp, videoTimestamp time.Duration
 
-	h264JitterBuffer   *jitterbuffer.JitterBuffer
-	lastVideoTimestamp uint32
-	width, height      int
-	mu                 sync.Mutex
+	width, height int
+	mu            sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
 	return &webmSaver{
-		filenName:        fileName,
-		audioBuilder:     samplebuilder.New(10, &codecs.OpusPacket{}, 48000),
-		vp8Builder:       samplebuilder.New(100, &codecs.VP8Packet{}, 90000),
-		h264JitterBuffer: jitterbuffer.New(),
-		width:            640,
-		height:           360,
+		filenName:    fileName,
+		audioBuilder: samplebuilder.New(10, &codecs.OpusPacket{}, 48000),
+		vp8Builder:   samplebuilder.New(100, &codecs.VP8Packet{}, 90000),
+		width:        640,
+		height:       360,
 	}
 }
 
 func (s *webmSaver) Close() {
 	logger.Info("Finalizing webm..")
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.audioWriter != nil {
 		if err := s.audioWriter.Close(); err != nil {
 			logger.Error(err)
@@ -84,7 +82,6 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 		}
 	}
 }
-
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
@@ -192,7 +189,8 @@ func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height i
 			},
 		})
 	if err != nil {
-		panic(err)
+		logger.Error(err)
+		return
 	}
 	logger.Infof("WebM saver has started with video width=%d, height=%d\n", width, height)
 	s.audioWriter = ws[0]

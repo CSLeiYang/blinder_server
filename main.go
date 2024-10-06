@@ -547,7 +547,10 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					case webrtc.MimeTypeVP8:
 						recordSaver.PushVP8(rtpPacketV)
 					}
-					snapShotChan <- rtpPacketV
+					select {
+					case snapShotChan <- rtpPacketV:
+					default:
+					}
 
 				}
 

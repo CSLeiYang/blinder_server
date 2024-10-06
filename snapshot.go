@@ -24,6 +24,7 @@ func Snapshot(rtpChan chan *rtp.Packet, filePath string, filePrefix string) {
 		case packet, ok := <-rtpChan:
 			if !ok {
 				// Channel is closed, exit the loop
+				logger.Info("Snapshot quit")
 				return
 			}
 			sampleBuilder.Push(packet)
