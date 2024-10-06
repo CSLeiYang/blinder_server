@@ -34,7 +34,7 @@ async function joinSession(confName) {
             video: {
                 facingMode: { ideal: 'environment' },
                 width: { ideal: 360 },
-                height: { ideal: 480 },
+                height: { ideal: 640 },
                 frameRate: { ideal: 30 },
             },
             audio: {
