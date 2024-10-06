@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 	"yanglei_blinder/logger"
 
@@ -34,6 +35,7 @@ type webmSaver struct {
 	h264JitterBuffer   *jitterbuffer.JitterBuffer
 	lastVideoTimestamp uint32
 	width, height      int
+	mu                 sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -65,7 +67,6 @@ func (s *webmSaver) Close() {
 
 func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 	s.audioBuilder.Push(rtpPacket)
-
 	for {
 		sample := s.audioBuilder.Pop()
 		if sample == nil {
@@ -73,7 +74,10 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 		}
 		if s.audioWriter != nil {
 			s.audioTimestamp += sample.Duration
-			if _, err := s.audioWriter.Write(true, int64(s.audioTimestamp/time.Millisecond), sample.Data); err != nil {
+			s.mu.Lock()
+			_, err := s.audioWriter.Write(true, int64(s.audioTimestamp/time.Millisecond), sample.Data)
+			s.mu.Unlock()
+			if err != nil {
 				logger.Error(err)
 				return
 			}
@@ -163,7 +167,9 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			}
 
 			if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
+				s.mu.Lock()
 				s.InitWriter(s.filenName, false, width, height)
+				s.mu.Unlock()
 			}
 			s.width = width
 			s.height = height
@@ -174,7 +180,9 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 
 		if s.videoWriter != nil {
 			s.videoTimestamp += sample.Duration
+			s.mu.Lock()
 			_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
+			s.mu.Unlock()
 			if err != nil {
 				logger.Error(err)
 				return
