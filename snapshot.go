@@ -70,6 +70,5 @@ func Snapshot(rtpChan chan *rtp.Packet, filePath string, filePrefix string) {
 		}
 
 		fmt.Printf("Snapshot saved to %s\n", fileName) // 输出保存路径
-		return
 	}
 }

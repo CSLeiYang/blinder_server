@@ -523,6 +523,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					logger.Error(errSend)
 				}
 				snapShotChan := make(chan *rtp.Packet)
+				defer close(snapShotChan)
 				go func() {
 					Snapshot(snapShotChan, recordPath, confRoom.Name)
 				}()
