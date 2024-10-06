@@ -21,7 +21,6 @@ import (
 	// "github.com/pion/rtcp"
 
 	"github.com/pion/webrtc/v4"
-	"github.com/pion/webrtc/v4/pkg/media/oggwriter"
 )
 
 type ConfRoom struct {
@@ -277,16 +276,18 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 		logger.Error(err)
 		return "", err
 	}
-	audioFileName := fmt.Sprintf("%s/%s_sub_audio_%s_%v.ogg", recordPath, confRoom.Name, userName, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-	audioFileWriter, err := oggwriter.New(audioFileName, 48000, 2)
+
+	recordFileName := fmt.Sprintf("%s/%s_sub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
 	if err != nil {
 		logger.Error(err)
 		return "", err
 	}
+	recordSaver := newWebmSaver(recordFileName)
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
 				logger.Info("Sub Audio Track")
+				defer logger.Info("Sub Audio Track end.")
 				for {
 					rtpPacket, _, readErr := remoteTrack.ReadRTP()
 					if readErr != nil {
@@ -294,12 +295,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 						return
 					}
 
-					err := audioFileWriter.WriteRTP(rtpPacket)
-					if err != nil {
-						logger.Error(err)
-						break
-					}
-
+					recordSaver.PushOpus(rtpPacket)
 					if err = confRoom.PubLocalAudioTrack.WriteRTP(rtpPacket); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 						logger.Error(err)
 						break
@@ -316,7 +312,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 			logger.Warn("peerConnection will be close")
 			delete(confRoom.SubLocalVideoTrack, userName)
 			delete(confRoom.SublocalAudioTrack, userName)
-			audioFileWriter.Close()
+			recordSaver.Close()
 			peerConnection.Close()
 		}
 	})
@@ -525,9 +521,9 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 					for _, localTrack := range confRoom.SublocalAudioTrack {
 						err := localTrack.WriteRTP(rtpPacketA)
-						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+						if err != nil && !errors.Is(err, io.EOF) {
 							logger.Error(err)
-							break
+							continue
 						}
 					}
 

@@ -157,7 +157,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 		// Read VP8 header.
 		videoKeyframe := (sample.Data[0]&0x1 == 0)
 		if videoKeyframe {
-			logger.Info("Received a keyframe (VP8).")
+			// logger.Info("Received a keyframe (VP8).")
 			// Keyframe has frame information.
 			raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
 			width := int(raw & 0x3FFF)
@@ -174,7 +174,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			s.height = height
 
 		} else {
-			logger.Info("Received a non-keyframe (VP8).")
+			// logger.Info("Received a non-keyframe (VP8).")
 		}
 
 		if s.videoWriter != nil {
