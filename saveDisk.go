@@ -20,10 +20,6 @@ import (
 	"github.com/pion/webrtc/v3/pkg/media/samplebuilder"
 )
 
-const (
-	naluTypeBitmask = 0b11111
-	naluTypeSPS     = 7
-)
 
 type webmSaver struct {
 	filenName                      string

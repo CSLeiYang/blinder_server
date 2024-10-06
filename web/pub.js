@@ -44,7 +44,7 @@ async function joinSession(confName) {
         });
 
     } catch (error) {
-        showError(`initLocalStream error: ${error.message}`);
+        displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
         return;
     }
 
@@ -85,22 +85,46 @@ async function joinSession(confName) {
 
     peerConnection.oniceconnectionstatechange = async () => {
         console.log(`ICE Connection State: ${peerConnection.iceConnectionState}`);
-        if (peerConnection.iceConnectionState === 'connected') {
-            try {
-                document.body.style.backgroundColor = document.body.style.backgroundColor === 'lightblue' ? 'lightgreen' : 'lightblue';
-                // 定期触发小的 DOM 更新
-                setInterval(() => {
+        let message;
+        switch (peerConnection.iceConnectionState) {
+            case 'new':
+                message = '正在建立连接...';
+                break;
+            case 'checking':
+                message = '检查网络连接...';
+                break;
+            case 'connected':
+                message = '已连接！';
+                try {
                     document.body.style.backgroundColor = document.body.style.backgroundColor === 'lightblue' ? 'lightgreen' : 'lightblue';
-
-                }, 10000); // 每10秒更新一次可见性
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock active');
-
-            } catch (err) {
-                showError(`${err.name}, ${err.message}`);
-            }
+                    setInterval(() => {
+                        document.body.style.backgroundColor = document.body.style.backgroundColor === 'lightblue' ? 'lightgreen' : 'lightblue';
+                    }, 10000);
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock active');
+                } catch (err) {
+                    displayMessage(`${err.name}, ${err.message}`, true); // 使用新的函数名并标记为错误
+                }
+                break;
+            case 'completed':
+                message = '连接已完成。';
+                break;
+            case 'failed':
+                message = '连接失败，请重试。';
+                break;
+            case 'disconnected':
+                message = '已断开连接。';
+                break;
+            case 'closed':
+                message = '连接已关闭。';
+                break;
+            default:
+                message = '未知状态。';
+                break;
         }
-    };
+        // 显示消息
+        displayMessage(message);
+    }
 
     peerConnection.ontrack = (event) => {
         const el = document.createElement(event.track.kind);
@@ -132,9 +156,16 @@ async function joinSession(confName) {
     };
 }
 
-// 显示错误信息的函数
-function showError(message) {
-    errorDisplay.textContent = message; // 更新错误信息
+// 修改显示消息的函数，使其更加通用
+function displayMessage(message, isError = false) {
+    const errorDisplay = document.getElementById('error-display');
+    errorDisplay.textContent = message;
+    // 可以根据是否是错误来改变样式
+    if (isError) {
+        errorDisplay.style.color = 'red';
+    } else {
+        errorDisplay.style.color = 'black'; // 或者其他颜色
+    }
 }
 
 function toggleMute() {
