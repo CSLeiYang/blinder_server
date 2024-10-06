@@ -552,19 +552,14 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-					logger.Info("pub video ReadRTP success")
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						err := localTrack.WriteRTP(rtpPacketV)
 						if err != nil && !errors.Is(err, io.EOF) {
 							logger.Error(err)
 							break
-						} else {
-							logger.Info("pub video writeRtp success")
 						}
-
 					}
-					logger.Info("pub video record")
 					switch codec.MimeType {
 					case webrtc.MimeTypeVP8:
 						recordSaver.PushVP8(rtpPacketV)

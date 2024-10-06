@@ -152,9 +152,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	s.vp8Builder.Push(rtpPacket)
 	defer logger.Info("PushVP8 end...")
 	for {
-		logger.Info("s.vp8Builder.Pop()")
 		sample := s.vp8Builder.Pop()
-		logger.Info("s.vp8Builder.Pop() end.")
 		if sample == nil {
 			break
 		}
