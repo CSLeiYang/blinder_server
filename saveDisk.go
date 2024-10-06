@@ -37,6 +37,7 @@ type webmSaver struct {
 	width, height      int
 	done               bool
 	mu                 sync.Mutex
+	muVp8 sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -148,8 +149,10 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
-	logger.Info("PushVP8...")
+	logger.Infof("PushVP8")
+	s.muVp8.Lock()
 	s.vp8Builder.Push(rtpPacket)
+	s.muVp8.Unlock()
 	logger.Info("PushVP8 end...")
 }
 
@@ -162,7 +165,9 @@ func (s *webmSaver) StartPushVP8() {
 				return
 			}
 			logger.Info("s.vp8Builder.Pop()")
+			s.muVp8.Lock()
 			sample := s.vp8Builder.Pop()
+			s.muVp8.Unlock()
 			logger.Info("s.vp8Builder.Pop() end.")
 			if sample == nil {
 				continue
