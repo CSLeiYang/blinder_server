@@ -18,7 +18,7 @@ import (
 	"github.com/pion/interceptor/pkg/jitterbuffer"
 	"github.com/pion/rtp"
 	"github.com/pion/rtp/codecs"
-	"github.com/pion/webrtc/v4/pkg/media/samplebuilder"
+	"github.com/pion/webrtc/v3/pkg/media/samplebuilder"
 )
 
 const (
@@ -37,7 +37,7 @@ type webmSaver struct {
 	width, height      int
 	done               bool
 	mu                 sync.Mutex
-	muVp8 sync.Mutex
+	muVp8              sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -79,10 +79,13 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 		}
 		if s.audioWriter != nil {
 			s.audioTimestamp += sample.Duration
+			s.mu.Lock()
 			if _, err := s.audioWriter.Write(true, int64(s.audioTimestamp/time.Millisecond), sample.Data); err != nil {
 				logger.Error(err)
+				s.mu.Unlock()
 				return
 			}
+			s.mu.Unlock()
 		}
 	}
 }
