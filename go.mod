@@ -5,6 +5,7 @@ go 1.21.6
 require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/pion/interceptor v0.1.30
+	github.com/pion/webrtc/v3 v3.3.3
 	github.com/pion/webrtc/v4 v4.0.0-beta.30
 )
 

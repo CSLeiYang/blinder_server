@@ -37,7 +37,6 @@ type webmSaver struct {
 	width, height      int
 	done               bool
 	mu                 sync.Mutex
-	muVp8              sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
@@ -153,9 +152,7 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 	logger.Infof("PushVP8")
-	s.muVp8.Lock()
 	s.vp8Builder.Push(rtpPacket)
-	s.muVp8.Unlock()
 	logger.Info("PushVP8 end...")
 }
 
@@ -168,9 +165,7 @@ func (s *webmSaver) StartPushVP8() {
 				return
 			}
 			logger.Info("s.vp8Builder.Pop()")
-			s.muVp8.Lock()
 			sample := s.vp8Builder.Pop()
-			s.muVp8.Unlock()
 			logger.Info("s.vp8Builder.Pop() end.")
 			if sample == nil {
 				continue
@@ -200,16 +195,17 @@ func (s *webmSaver) StartPushVP8() {
 				logger.Info("Received a non-keyframe (VP8).")
 			}
 
+			s.mu.Lock()
 			if s.videoWriter != nil {
 				s.videoTimestamp += sample.Duration
-				s.mu.Lock()
 				_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
-				s.mu.Unlock()
 				if err != nil {
+					s.mu.Unlock()
 					logger.Error(err)
 					return
 				}
 			}
+			s.mu.Unlock()
 		}
 	}()
 }
