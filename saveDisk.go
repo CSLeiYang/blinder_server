@@ -75,13 +75,10 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 		}
 		if s.audioWriter != nil {
 			s.audioTimestamp += sample.Duration
-			s.mu.Lock()
 			if _, err := s.audioWriter.Write(true, int64(s.audioTimestamp/time.Millisecond), sample.Data); err != nil {
 				logger.Error(err)
-				s.mu.Unlock()
 				return
 			}
-			s.mu.Unlock()
 		}
 	}
 }
