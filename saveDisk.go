@@ -35,7 +35,6 @@ type webmSaver struct {
 	h264JitterBuffer   *jitterbuffer.JitterBuffer
 	lastVideoTimestamp uint32
 	width, height      int
-	done               bool
 	mu                 sync.Mutex
 }
 
@@ -47,7 +46,6 @@ func newWebmSaver(fileName string) *webmSaver {
 		h264JitterBuffer: jitterbuffer.New(),
 		width:            640,
 		height:           360,
-		done:             false,
 	}
 }
 
@@ -65,7 +63,6 @@ func (s *webmSaver) Close() {
 			return
 		}
 	}
-	s.done = true
 }
 
 func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
@@ -151,67 +148,48 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	logger.Infof("PushVP8")
 	s.vp8Builder.Push(rtpPacket)
-	logger.Info("PushVP8 end...")
-}
+	defer logger.Info("PushVP8 end...")
+	for {
+		logger.Info("s.vp8Builder.Pop()")
+		sample := s.vp8Builder.Pop()
+		logger.Info("s.vp8Builder.Pop() end.")
+		if sample == nil {
+			break
+		}
+		// Read VP8 header.
+		videoKeyframe := (sample.Data[0]&0x1 == 0)
+		if videoKeyframe {
+			logger.Info("Received a keyframe (VP8).")
+			// Keyframe has frame information.
+			raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
+			width := int(raw & 0x3FFF)
+			height := int((raw >> 16) & 0x3FFF)
 
-func (s *webmSaver) StartPushVP8() {
-	go func() {
-		logger.Info("StartPushVP8")
-		defer logger.Info("StartPushVP8 quit")
-		for {
-			if s.done {
+			if s.width != width || s.height != height {
+				logger.Infof("Resolution change detected: (%dx%d)-> %dx%d", s.width, s.height, width, height)
+			}
+
+			if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
+				s.InitWriter(s.filenName, false, width, height)
+			}
+			s.width = width
+			s.height = height
+
+		} else {
+			logger.Info("Received a non-keyframe (VP8).")
+		}
+
+		if s.videoWriter != nil {
+			s.videoTimestamp += sample.Duration
+			_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
+			if err != nil {
+				logger.Error(err)
 				return
 			}
-			logger.Info("s.vp8Builder.Pop()")
-			s.mu.Lock()
-			sample := s.vp8Builder.Pop()
-			s.mu.Unlock()
-			logger.Info("s.vp8Builder.Pop() end.")
-			if sample == nil {
-				continue
-			}
-			// Read VP8 header.
-			videoKeyframe := (sample.Data[0]&0x1 == 0)
-			if videoKeyframe {
-				logger.Info("Received a keyframe (VP8).")
-				// Keyframe has frame information.
-				raw := uint(sample.Data[6]) | uint(sample.Data[7])<<8 | uint(sample.Data[8])<<16 | uint(sample.Data[9])<<24
-				width := int(raw & 0x3FFF)
-				height := int((raw >> 16) & 0x3FFF)
-
-				if s.width != width || s.height != height {
-					logger.Infof("Resolution change detected: (%dx%d)-> %dx%d", s.width, s.height, width, height)
-				}
-
-				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
-					s.mu.Lock()
-					s.InitWriter(s.filenName, false, width, height)
-					s.mu.Unlock()
-				}
-				s.width = width
-				s.height = height
-
-			} else {
-				logger.Info("Received a non-keyframe (VP8).")
-			}
-
-			s.mu.Lock()
-			if s.videoWriter != nil {
-				s.videoTimestamp += sample.Duration
-				_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
-				if err != nil {
-					s.mu.Unlock()
-					logger.Error(err)
-					return
-				}
-			}
-			s.mu.Unlock()
 		}
-	}()
+	}
 }
 
 func (s *webmSaver) InitWriter(baseFileName string, isH264 bool, width, height int) {
