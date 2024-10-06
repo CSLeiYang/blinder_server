@@ -151,6 +151,8 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	logger.Infof("PushVP8")
 	s.vp8Builder.Push(rtpPacket)
 	logger.Info("PushVP8 end...")
@@ -165,7 +167,9 @@ func (s *webmSaver) StartPushVP8() {
 				return
 			}
 			logger.Info("s.vp8Builder.Pop()")
+			s.mu.Lock()
 			sample := s.vp8Builder.Pop()
+			s.mu.Unlock()
 			logger.Info("s.vp8Builder.Pop() end.")
 			if sample == nil {
 				continue
