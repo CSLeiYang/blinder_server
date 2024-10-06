@@ -2,11 +2,18 @@
 
 SERVICE_NAME="yanglei_blinder"
 LOG_FILE="blinder.log"
+RESTART_DELAY=5  # 重启延迟（秒）
 
 start() {
     echo "Starting $SERVICE_NAME..."
-    nohup ./$SERVICE_NAME > $LOG_FILE 2>&1 &
-    echo "$SERVICE_NAME started with PID $!"
+    while true; do
+        nohup ./$SERVICE_NAME >> $LOG_FILE 2>&1 &
+        PID=$!
+        echo "$SERVICE_NAME started with PID $PID"
+        wait $PID
+        echo "$SERVICE_NAME exited. Restarting..." >> $LOG_FILE
+        sleep $RESTART_DELAY  # 添加重启延迟
+    done
 }
 
 stop() {
@@ -20,6 +27,11 @@ stop() {
     fi
 }
 
+restart() {
+    stop
+    start
+}
+
 case "$1" in
     start)
         start
@@ -27,8 +39,11 @@ case "$1" in
     stop)
         stop
         ;;
+    restart)
+        restart
+        ;;
     *)
-        echo "Usage: $0 {start|stop}"
+        echo "Usage: $0 {start|stop|restart}"
         exit 1
         ;;
 esac
