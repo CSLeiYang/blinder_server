@@ -35,7 +35,6 @@ type webmSaver struct {
 	h264JitterBuffer   *jitterbuffer.JitterBuffer
 	lastVideoTimestamp uint32
 	width, height      int
-	mu                 sync.Mutex
 }
 
 func newWebmSaver(fileName string) *webmSaver {
