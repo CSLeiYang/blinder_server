@@ -6,14 +6,15 @@ RESTART_DELAY=5  # 重启延迟（秒）
 
 start() {
     echo "Starting $SERVICE_NAME..."
-    while true; do
-        nohup ./$SERVICE_NAME >> $LOG_FILE 2>&1 &
-        PID=$!
-        echo "$SERVICE_NAME started with PID $PID"
-        wait $PID
-        echo "$SERVICE_NAME exited. Restarting..." >> $LOG_FILE
-        sleep $RESTART_DELAY  # 添加重启延迟
-    done
+    nohup bash -c "while true; do
+        ./$SERVICE_NAME >> $LOG_FILE 2>&1 &
+        PID=\$!
+        echo \"$SERVICE_NAME started with PID \$PID\"
+        wait \$PID
+        echo \"$SERVICE_NAME exited. Restarting...\" >> $LOG_FILE
+        sleep $RESTART_DELAY
+    done" > /dev/null 2>&1 &
+    echo "$SERVICE_NAME is now running in the background."
 }
 
 stop() {
