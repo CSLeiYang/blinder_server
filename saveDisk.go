@@ -148,9 +148,9 @@ func (s *webmSaver) PushH264(rtpPacket *rtp.Packet) {
 }
 
 func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	logger.Info("PushVP8...")
 	s.vp8Builder.Push(rtpPacket)
+	logger.Info("PushVP8 end...")
 }
 
 func (s *webmSaver) StartPushVP8() {
@@ -161,10 +161,10 @@ func (s *webmSaver) StartPushVP8() {
 			if s.done {
 				return
 			}
-			s.mu.Lock()
+			logger.Info("s.vp8Builder.Pop()")
 			sample := s.vp8Builder.Pop()
+			logger.Info("s.vp8Builder.Pop() end.")
 			if sample == nil {
-				s.mu.Unlock()
 				continue
 			}
 			// Read VP8 header.
@@ -181,7 +181,9 @@ func (s *webmSaver) StartPushVP8() {
 				}
 
 				if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
+					s.mu.Lock()
 					s.InitWriter(s.filenName, false, width, height)
+					s.mu.Unlock()
 				}
 				s.width = width
 				s.height = height
@@ -192,13 +194,14 @@ func (s *webmSaver) StartPushVP8() {
 
 			if s.videoWriter != nil {
 				s.videoTimestamp += sample.Duration
-				if _, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data); err != nil {
+				s.mu.Lock()
+				_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
+				s.mu.Unlock()
+				if err != nil {
 					logger.Error(err)
-					s.mu.Unlock()
 					return
 				}
 			}
-			s.mu.Unlock()
 		}
 	}()
 }

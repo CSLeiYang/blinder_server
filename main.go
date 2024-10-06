@@ -557,7 +557,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 					for _, localTrack := range confRoom.SubLocalVideoTrack {
 						err := localTrack.WriteRTP(rtpPacketV)
-						if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+						if err != nil && !errors.Is(err, io.EOF) {
 							logger.Error(err)
 							break
 						} else {
