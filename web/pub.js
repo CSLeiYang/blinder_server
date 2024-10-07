@@ -23,7 +23,7 @@ const errorDisplay = document.getElementById('error-display');
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: {facingMode: { ideal: 'environment' }},
+            video: { facingMode: { ideal: 'environment' } },
             audio: true
         });
 
@@ -37,11 +37,7 @@ async function init() {
             addResolutionChangeListeners();
         }
 
-        // 更新本地视频元素
-        const localVideo = document.getElementById('local-video');
-        if (localVideo) {
-            localVideo.srcObject = localStream;
-        }
+        updateLocalStream()
 
     } catch (error) {
         displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
