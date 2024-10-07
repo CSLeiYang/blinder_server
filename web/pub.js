@@ -50,6 +50,10 @@ const commonResolutions = [
     { width: 120, height: 160 },  // 竖屏 3:4
     { width: 240, height: 320 },  // 竖屏 3:4
     { width: 480, height: 640 },  // 竖屏 3:4
+    { width: 480, height: 360 },  // 竖屏 4:3
+    { width: 360, height: 180 },  // 竖屏 4:3
+    { width: 240, height: 180 },  // 竖屏 4:3
+
 ];
 function getSupportedResolutions(capabilities) {
     return commonResolutions.filter(resolution => {
