@@ -16,15 +16,88 @@ let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创
 const errorDisplay = document.getElementById('error-display');
 
 
-// 监听分辨率选择的变化
-document.querySelectorAll('input[name="resolution"]').forEach(radio => {
-    radio.addEventListener('change', async () => {
-        await updateLocalStream();
-    });
-});
 
-// 页面加载时初始化 localStream
-updateLocalStream();
+
+
+// 页面加载时初始化 localStream 并获取支持的分辨率
+async function init() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        });
+
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            const capabilities = videoTrack.getCapabilities();
+            const supportedResolutions = getSupportedResolutions(capabilities);
+            populateResolutionOptions(supportedResolutions);
+
+            // 在这里添加分辨率选择的监听器
+            addResolutionChangeListeners();
+        }
+
+        // 更新本地视频元素
+        const localVideo = document.getElementById('local-video');
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        }
+
+    } catch (error) {
+        displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
+    }
+}
+
+const commonResolutions = [
+    { width: 240, height: 320 },  // 竖屏 QVGA
+    { width: 320, height: 480 },  // 竖屏 HVGA
+    { width: 360, height: 640 },  // 竖屏 3:4
+    { width: 720, height: 1280 }, // 竖屏 9:16
+    { width: 160, height: 120 },
+    { width: 320, height: 240 },
+    { width: 640, height: 360 },
+    { width: 800, height: 480 },
+    { width: 1280, height: 720 },
+    { width: 1920, height: 1080 },
+
+];
+function getSupportedResolutions(capabilities) {
+    return commonResolutions.filter(resolution => {
+        const { width, height } = resolution;
+        return (
+            (capabilities.width.min <= width && width <= capabilities.width.max) &&
+            (capabilities.height.min <= height && height <= capabilities.height.max)
+        );
+    }).map(resolution => `${resolution.width}x${resolution.height}`);
+}
+function populateResolutionOptions(resolutions) {
+    const resolutionSelection = document.getElementById('resolution-selection');
+    resolutionSelection.innerHTML = ''; // 清空现有的选项
+
+    resolutions.forEach(resolution => {
+        const [width, height] = resolution.split('x');
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'resolution';
+        input.value = resolution;
+        input.checked = (width === '240' && height === '320'); // 默认选中320x240
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(` ${width}x${height}`));
+        resolutionSelection.appendChild(label);
+    });
+}
+
+// 在页面加载时调用 init 函数
+init();
+
+function addResolutionChangeListeners() {
+    document.querySelectorAll('input[name="resolution"]').forEach(radio => {
+        radio.addEventListener('change', async () => {
+            await updateLocalStream();
+        });
+    });
+}
 
 async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
