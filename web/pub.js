@@ -15,79 +15,6 @@ let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创
 // 创建一个用于显示错误信息的元素
 const errorDisplay = document.getElementById('error-display');
 
-
-
-
-
-// 页面加载时初始化 localStream 并获取支持的分辨率
-async function init() {
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                facingMode: { ideal: 'environment'} ,
-                width: {ideal: 640},
-                height: {ideal:360},
-            },
-            audio: true
-        });
-
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack) {
-            const capabilities = videoTrack.getCapabilities();
-            const supportedResolutions = getSupportedResolutions(capabilities);
-            populateResolutionOptions(supportedResolutions);
-
-            // 在这里添加分辨率选择的监听器
-            // addResolutionChangeListeners();
-        }
-        const localVideo = document.getElementById('local-video')
-        if (localVideo) {
-            localVideo.srcObject = localStream
-        }
-
-    } catch (error) {
-        displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
-    }
-}
-
-const commonResolutions = [
-    { width: 120, height: 160 },  // 竖屏 3:4
-    { width: 240, height: 320 },  // 竖屏 3:4
-    { width: 480, height: 640 },  // 竖屏 3:4
-    { width: 480, height: 360 },  // 竖屏 4:3
-    { width: 360, height: 180 },  // 竖屏 4:3
-    { width: 240, height: 180 },  // 竖屏 4:3
-
-];
-function getSupportedResolutions(capabilities) {
-    return commonResolutions.filter(resolution => {
-        const { width, height } = resolution;
-        return (
-            (capabilities.width.min <= width && width <= capabilities.width.max) &&
-            (capabilities.height.min <= height && height <= capabilities.height.max)
-        );
-    }).map(resolution => `${resolution.width}x${resolution.height}`);
-}
-function populateResolutionOptions(resolutions) {
-    const resolutionSelection = document.getElementById('resolution-selection');
-    resolutionSelection.innerHTML = ''; // 清空现有的选项
-
-    resolutions.forEach(resolution => {
-        const [width, height] = resolution.split('x');
-        const label = document.createElement('label');
-        const input = document.createElement('input');
-        input.type = 'radio';
-        input.name = 'resolution';
-        input.value = resolution;
-        label.appendChild(input);
-        label.appendChild(document.createTextNode(` ${width}x${height}`));
-        resolutionSelection.appendChild(label);
-    });
-}
-
-// 在页面加载时调用 init 函数
-init();
-
 function addResolutionChangeListeners() {
     document.querySelectorAll('input[name="resolution"]').forEach(radio => {
         radio.addEventListener('change', async () => {
@@ -291,3 +218,6 @@ async function toggleAudioOutput() {
             });
     }
 }
+
+addResolutionChangeListeners();
+updateLocalStream();
