@@ -15,23 +15,20 @@ let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创
 // 创建一个用于显示错误信息的元素
 const errorDisplay = document.getElementById('error-display');
 
-async function joinSession(confName) {
-    const name = document.getElementById('name').value;
-    if (!name) {
-        showError('Please enter your name');
-        return;
-    }
 
-    // 获取分辨率选项
+// 监听分辨率选择的变化
+document.querySelectorAll('input[name="resolution"]').forEach(radio => {
+    radio.addEventListener('change', async () => {
+        await updateLocalStream();
+    });
+});
+
+// 页面加载时初始化 localStream
+updateLocalStream();
+
+async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
     const [width, height] = resolution.map(Number);
-
-    document.getElementById('join-screen').style.display = 'none';
-    document.getElementById('participant-view').style.display = 'block';
-
-    peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
 
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -47,10 +44,58 @@ async function joinSession(confName) {
             }
         });
 
+        // 更新本地视频元素
+        const localVideo = document.getElementById('local-video');
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        } else {
+            // 如果还没有创建本地视频元素，则创建并添加
+            const localVideo = document.createElement('video');
+            localVideo.id = 'local-video';
+            localVideo.srcObject = localStream;
+            localVideo.autoplay = true;
+            localVideo.muted = true;
+            document.getElementById('local-video-container').appendChild(localVideo);
+        }
+
     } catch (error) {
         displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
+    }
+}
+
+async function joinSession(confName) {
+    const name = document.getElementById('name').value;
+    if (!name) {
+        showError('Please enter your name');
         return;
     }
+
+
+    document.getElementById('join-screen').style.display = 'none';
+    document.getElementById('participant-view').style.display = 'block';
+
+    peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    // try {
+    //     localStream = await navigator.mediaDevices.getUserMedia({
+    //         video: {
+    //             facingMode: { ideal: 'environment' },
+    //             width: { ideal: width },
+    //             height: { ideal: height },
+    //             frameRate: { ideal: 30 },
+    //         },
+    //         audio: {
+    //             channelCount: 1,
+    //             maxBitrate: 16000,
+    //         }
+    //     });
+
+    // } catch (error) {
+    //     displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
+    //     return;
+    // }
 
     // 将音频流连接到目标音频流
     localStream.getAudioTracks().forEach(track => {
