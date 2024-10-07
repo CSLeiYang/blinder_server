@@ -31,6 +31,36 @@ function stopLocalStream(localStream) {
             // 停止每个轨道
             track.stop();
         });
+
+        // 清除引用
+        localStream = null;
+    }
+}
+async function updateLocalStream() {
+    const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
+    const [width, height] = resolution.map(Number);
+    try {
+        stopLocalStream(localStream)
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: width },
+                height: { ideal: height },
+                frameRate: { ideal: 30 },
+            },
+            audio: {
+                channelCount: 1,
+            }
+        });
+
+        // 更新本地视频元素
+        const localVideo = document.getElementById('local-video');
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        }
+
+    } catch (error) {
+        displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
     }
 }
 
@@ -203,4 +233,4 @@ async function toggleAudioOutput() {
 }
 
 addResolutionChangeListeners();
-updateLocalStream();
+await updateLocalStream();
