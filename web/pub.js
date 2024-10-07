@@ -23,11 +23,24 @@ function addResolutionChangeListeners() {
     });
 }
 
+// 假设 localStream 已经被定义并且包含媒体流
+function stopLocalStream(localStream) {
+    if (localStream) {
+        // 遍历 localStream 中的所有轨道
+        localStream.getTracks().forEach(track => {
+            // 停止每个轨道
+            track.stop();
+        });
+        
+        // 清除引用
+        localStream = null;
+    }
+}
 async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
     const [width, height] = resolution.map(Number);
-
     try {
+        stopLocalStream(localStream)
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: { ideal: 'environment' },
