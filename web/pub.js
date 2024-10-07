@@ -12,6 +12,9 @@ let audioOutputDeviceId = 'default'; // 用于存储当前音频输出设备的 
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创建目标音频流
 
+// 保存会议名称
+let confName;
+
 // 创建一个用于显示错误信息的元素
 const errorDisplay = document.getElementById('error-display');
 
@@ -65,11 +68,17 @@ async function updateLocalStream() {
     }
 }
 
-async function joinSession(name) {
+async function joinSession() {
+    const nameInput = document.getElementById('name');
+    const name = nameInput.value.trim();
+
     if (!name) {
-        showError('Please enter your name');
+        showError('Please enter a conference name');
         return;
     }
+
+    // 保存会议名称
+    confName = name;
 
     document.getElementById('join-screen').style.display = 'none';
     document.getElementById('participant-view').style.display = 'block';
@@ -103,7 +112,7 @@ async function joinSession(name) {
             userId: '123456',
             sdp: btoa(JSON.stringify(offer)),
             cmd: 'create',
-            roomName: name
+            roomName: confName
         }));
     };
 
@@ -142,12 +151,12 @@ async function joinSession(name) {
             case 'failed':
                 message = '连接失败，请重试。';
                 // 重新加入会话
-                rejoinSession(name);
+                rejoinSession();
                 break;
             case 'disconnected':
                 message = '已断开连接。';
                 // 重新加入会话
-                rejoinSession(name);
+                rejoinSession();
                 break;
             case 'closed':
                 message = '连接已关闭。';
@@ -198,6 +207,10 @@ function displayMessage(message, isError = false) {
     }
 }
 
+function showError(message) {
+    displayMessage(message, true);
+}
+
 function toggleMute() {
     localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
     isMuted = !isMuted;
@@ -242,10 +255,12 @@ window.addEventListener('beforeunload', function (event) {
 });
 
 // 重新加入会话的函数
-async function rejoinSession(name) {
+async function rejoinSession() {
     stopLocalStream(localStream);
-    peerConnection.close();
-    peerConnection = null;
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
     await updateLocalStream();
-    joinSession(name);
+    joinSession(); // 直接调用 joinSession，它会使用全局变量 confName
 }
