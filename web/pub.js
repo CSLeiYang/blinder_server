@@ -233,4 +233,8 @@ async function toggleAudioOutput() {
 }
 
 addResolutionChangeListeners();
-await updateLocalStream();
+updateLocalStream();
+
+window.addEventListener('beforeunload', function (event) {
+    stopLocalStream(localStream);
+});
