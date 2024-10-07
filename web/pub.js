@@ -118,6 +118,7 @@ async function joinSession(confName) {
                 break;
             case 'disconnected':
                 message = '已断开连接。';
+                document.body.style.backgroundColor = 'red'
                 break;
             case 'closed':
                 message = '连接已关闭。';
