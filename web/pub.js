@@ -8,7 +8,7 @@ let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
 let wakeLock = null;
-let audioOutput = 'default'; // 用于存储当前音频输出设备的 ID
+let audioOutputDeviceId = 'default'; // 用于存储当前音频输出设备的 ID
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创建目标音频流
 
@@ -36,11 +36,12 @@ function stopLocalStream(localStream) {
         localStream = null;
     }
 }
+
 async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
     const [width, height] = resolution.map(Number);
     try {
-        stopLocalStream(localStream)
+        stopLocalStream(localStream);
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: { ideal: 'environment' },
@@ -60,17 +61,15 @@ async function updateLocalStream() {
         }
 
     } catch (error) {
-        displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
+        displayMessage(`updateLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
     }
 }
 
-async function joinSession(confName) {
-    const name = document.getElementById('name').value;
+async function joinSession(name) {
     if (!name) {
         showError('Please enter your name');
         return;
     }
-
 
     document.getElementById('join-screen').style.display = 'none';
     document.getElementById('participant-view').style.display = 'block';
@@ -142,10 +141,13 @@ async function joinSession(confName) {
                 break;
             case 'failed':
                 message = '连接失败，请重试。';
+                // 重新加入会话
+                rejoinSession(name);
                 break;
             case 'disconnected':
                 message = '已断开连接。';
-                document.body.style.backgroundColor = 'red'
+                // 重新加入会话
+                rejoinSession(name);
                 break;
             case 'closed':
                 message = '连接已关闭。';
@@ -156,7 +158,7 @@ async function joinSession(confName) {
         }
         // 显示消息
         displayMessage(message);
-    }
+    };
 
     peerConnection.ontrack = (event) => {
         const el = document.createElement(event.track.kind);
@@ -238,3 +240,12 @@ updateLocalStream();
 window.addEventListener('beforeunload', function (event) {
     stopLocalStream(localStream);
 });
+
+// 重新加入会话的函数
+async function rejoinSession(name) {
+    stopLocalStream(localStream);
+    peerConnection.close();
+    peerConnection = null;
+    await updateLocalStream();
+    joinSession(name);
+}

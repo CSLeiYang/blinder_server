@@ -10,23 +10,23 @@
 
 <body>
     <div id="error-display"></div>
-    <div id="resolution-selection">
-        <label>
-            <input type="radio" name="resolution" value="480x360" checked> 480x360
-        </label>
-        <label>
-            <input type="radio" name="resolution" value="360x270"> 360x270
-        </label>
-        <label>
-            <input type="radio" name="resolution" value="240x180"> 240x180
-        </label>
-    </div>
     <div id="join-screen">
         <input type="text" id="name" placeholder="输入您的名字">
         <button id="join-btn">创建房间</button>
     </div>
     <div id="local-video-container">
         <video id="local-video" autoplay muted></video>
+        <div id="resolution-selection">
+            <label>
+                <input type="radio" name="resolution" value="480x360" checked> 480x360
+            </label>
+            <label>
+                <input type="radio" name="resolution" value="360x270"> 360x270
+            </label>
+            <label>
+                <input type="radio" name="resolution" value="240x180"> 240x180
+            </label>
+        </div>
         <div id="controls">
             <button id="mute-btn">静音</button>
             <button id="video-btn">停止视频</button>
