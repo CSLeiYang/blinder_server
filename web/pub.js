@@ -23,7 +23,11 @@ const errorDisplay = document.getElementById('error-display');
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
+            video: { 
+                facingMode: { ideal: 'environment'} ,
+                width: {ideal: 640},
+                height: {ideal:360},
+            },
             audio: true
         });
 
@@ -34,7 +38,7 @@ async function init() {
             populateResolutionOptions(supportedResolutions);
 
             // 在这里添加分辨率选择的监听器
-            addResolutionChangeListeners();
+            // addResolutionChangeListeners();
         }
         const localVideo = document.getElementById('local-video')
         if (localVideo) {
