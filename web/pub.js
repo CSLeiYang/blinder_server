@@ -37,8 +37,6 @@ async function init() {
             addResolutionChangeListeners();
         }
 
-        updateLocalStream()
-
     } catch (error) {
         displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
     }
@@ -69,7 +67,6 @@ function populateResolutionOptions(resolutions) {
         input.type = 'radio';
         input.name = 'resolution';
         input.value = resolution;
-        input.checked = (width === '480' && height === '640');
         label.appendChild(input);
         label.appendChild(document.createTextNode(` ${width}x${height}`));
         resolutionSelection.appendChild(label);
