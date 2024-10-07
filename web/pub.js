@@ -49,11 +49,9 @@ async function init() {
 }
 
 const commonResolutions = [
-
-    { width: 90, height: 160 },
-    { width: 180, height: 320 },  // 竖屏 3:4
-    { width: 360, height: 640 },  // 竖屏 3:4
-
+    { width: 120, height: 160 },  // 竖屏 3:4
+    { width: 240, height: 320 },  // 竖屏 3:4
+    { width: 480, height: 640 },  // 竖屏 3:4
 ];
 function getSupportedResolutions(capabilities) {
     return commonResolutions.filter(resolution => {
@@ -75,7 +73,7 @@ function populateResolutionOptions(resolutions) {
         input.type = 'radio';
         input.name = 'resolution';
         input.value = resolution;
-        input.checked = (width === '180' && height === '320');
+        input.checked = (width === '480' && height === '640');
         label.appendChild(input);
         label.appendChild(document.createTextNode(` ${width}x${height}`));
         resolutionSelection.appendChild(label);
@@ -115,14 +113,6 @@ async function updateLocalStream() {
         const localVideo = document.getElementById('local-video');
         if (localVideo) {
             localVideo.srcObject = localStream;
-        } else {
-            // 如果还没有创建本地视频元素，则创建并添加
-            const localVideo = document.createElement('video');
-            localVideo.id = 'local-video';
-            localVideo.srcObject = localStream;
-            localVideo.autoplay = true;
-            localVideo.muted = true;
-            document.getElementById('local-video-container').appendChild(localVideo);
         }
 
     } catch (error) {
@@ -144,25 +134,6 @@ async function joinSession(confName) {
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
-
-    // try {
-    //     localStream = await navigator.mediaDevices.getUserMedia({
-    //         video: {
-    //             facingMode: { ideal: 'environment' },
-    //             width: { ideal: width },
-    //             height: { ideal: height },
-    //             frameRate: { ideal: 30 },
-    //         },
-    //         audio: {
-    //             channelCount: 1,
-    //             maxBitrate: 16000,
-    //         }
-    //     });
-
-    // } catch (error) {
-    //     displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
-    //     return;
-    // }
 
     // 将音频流连接到目标音频流
     localStream.getAudioTracks().forEach(track => {
@@ -251,12 +222,9 @@ async function joinSession(confName) {
         document.getElementById('remote-videos').appendChild(el);
     };
 
-    const localVideo = document.createElement('video');
-    localVideo.id = 'local-video';
+    const localVideo = document.getElementById('video');
     localVideo.srcObject = localStream;
-    localVideo.autoplay = true;
-    localVideo.muted = true;
-    document.getElementById('local-video-container').appendChild(localVideo);
+
 
     ws.onmessage = async (event) => {
         const jsonObject = JSON.parse(event.data);
