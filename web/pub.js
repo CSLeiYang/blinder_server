@@ -22,6 +22,10 @@ async function joinSession(confName) {
         return;
     }
 
+    // 获取分辨率选项
+    const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
+    const [width, height] = resolution.map(Number);
+
     document.getElementById('join-screen').style.display = 'none';
     document.getElementById('participant-view').style.display = 'block';
 
@@ -33,8 +37,8 @@ async function joinSession(confName) {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: { ideal: 'environment' },
-                width: { ideal: 640 },
-                height: { ideal: 360 },
+                width: { ideal: width },
+                height: { ideal: height },
                 frameRate: { ideal: 30 },
             },
             audio: {
