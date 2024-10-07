@@ -38,10 +38,11 @@ async function init() {
         }
 
         // 更新本地视频元素
-        const localVideo = document.getElementById('local-video');
-        if (localVideo) {
-            localVideo.srcObject = localStream;
-        }
+        await updateLocalStream()
+        // const localVideo = document.getElementById('local-video');
+        // if (localVideo) {
+        //     localVideo.srcObject = localStream;
+        // }
 
     } catch (error) {
         displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
@@ -49,43 +50,52 @@ async function init() {
 }
 
 const commonResolutions = [
-    { width: 240, height: 320 },  // 竖屏 QVGA
-    { width: 320, height: 480 },  // 竖屏 HVGA
+    { width: 180, height: 320 },  // 竖屏 3:4
     { width: 360, height: 640 },  // 竖屏 3:4
-    { width: 720, height: 1280 }, // 竖屏 9:16
     { width: 160, height: 120 },
     { width: 320, height: 240 },
     { width: 640, height: 360 },
     { width: 800, height: 480 },
     { width: 1280, height: 720 },
     { width: 1920, height: 1080 },
-
 ];
+
 function getSupportedResolutions(capabilities) {
-    return commonResolutions.filter(resolution => {
+    const supported = commonResolutions.filter(resolution => {
         const { width, height } = resolution;
         return (
             (capabilities.width.min <= width && width <= capabilities.width.max) &&
             (capabilities.height.min <= height && height <= capabilities.height.max)
         );
-    }).map(resolution => `${resolution.width}x${resolution.height}`);
+    });
+
+    // 找到面积最小的竖屏分辨率
+    const smallestResolution = supported.reduce((min, current) => {
+        if (current.width < min.width || (current.width === min.width && current.height < min.height)) {
+            return current;
+        }
+        return min;
+    }, { width: Infinity, height: Infinity });
+
+    return [smallestResolution].map(resolution => `${resolution.width}x${resolution.height}`);
 }
+
 function populateResolutionOptions(resolutions) {
     const resolutionSelection = document.getElementById('resolution-selection');
     resolutionSelection.innerHTML = ''; // 清空现有的选项
 
-    resolutions.forEach(resolution => {
-        const [width, height] = resolution.split('x');
+    if (resolutions.length > 0) {
+        const [width, height] = resolutions[0].split('x');
         const label = document.createElement('label');
         const input = document.createElement('input');
         input.type = 'radio';
         input.name = 'resolution';
-        input.value = resolution;
-        input.checked = (width === '240' && height === '320'); // 默认选中320x240
+        input.value = resolutions[0];
+        input.checked = true; // 默认选中最小的竖屏分辨率
         label.appendChild(input);
         label.appendChild(document.createTextNode(` ${width}x${height}`));
         resolutionSelection.appendChild(label);
-    });
+    }
 }
 
 // 在页面加载时调用 init 函数
