@@ -36,6 +36,10 @@ async function init() {
             // 在这里添加分辨率选择的监听器
             addResolutionChangeListeners();
         }
+        const localVideo = document.getElementById('local-video')
+        if (localVideo) {
+            localVideo.srcObject = localStream
+        }
 
     } catch (error) {
         displayMessage(`initLocalStream error: ${error.message}`, true); // 使用新的函数名并标记为错误
