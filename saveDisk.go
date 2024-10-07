@@ -20,7 +20,6 @@ import (
 	"github.com/pion/webrtc/v3/pkg/media/samplebuilder"
 )
 
-
 type webmSaver struct {
 	filenName                      string
 	audioWriter, videoWriter       webm.BlockWriteCloser
@@ -36,8 +35,6 @@ func newWebmSaver(fileName string) *webmSaver {
 		filenName:    fileName,
 		audioBuilder: samplebuilder.New(10, &codecs.OpusPacket{}, 48000),
 		vp8Builder:   samplebuilder.New(100, &codecs.VP8Packet{}, 90000),
-		width:        640,
-		height:       360,
 	}
 }
 
