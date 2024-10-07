@@ -23,7 +23,7 @@ const errorDisplay = document.getElementById('error-display');
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+            video: {facingMode: { ideal: 'environment' }},
             audio: true
         });
 
@@ -105,7 +105,6 @@ async function updateLocalStream() {
             },
             audio: {
                 channelCount: 1,
-                maxBitrate: 16000,
             }
         });
 

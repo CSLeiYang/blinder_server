@@ -562,7 +562,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
 			peerConnection.Close()
-			recordSaver.Close()
+			// recordSaver.Close()
 			delete(ConfRoomList, confRoom.Name)
 		}
 	})
