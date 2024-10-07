@@ -7,11 +7,12 @@
     <title>发布 Aii you</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="error-display"></div>
     <div id="resolution-selection">
         <label>
-            <input type="radio" name="resolution" value="160x120" > 160x120
+            <input type="radio" name="resolution" value="160x120"> 160x120
         </label>
         <label>
             <input type="radio" name="resolution" value="320x240" checked> 320x240
@@ -24,20 +25,19 @@
         <input type="text" id="name" placeholder="输入您的名字">
         <button id="join-btn">创建房间</button>
     </div>
+    <div id="local-video-container">
+        <div id="controls">
+            <button id="mute-btn">静音</button>
+            <button id="video-btn">停止视频</button>
+            <button id="output-btn">切换音频输出</button> <!-- 新增的切换按钮 -->
+        </div>
+    </div>
     <div id="participant-view" style="display: none;">
-        <div id="video-container">
-            <div id="local-video-container">
-                <div id="controls">
-                    <button id="mute-btn">静音</button>
-                    <button id="video-btn">停止视频</button>
-                    <button id="output-btn">切换音频输出</button> <!-- 新增的切换按钮 -->
-                </div>
-            </div>
-            <div id="remote-videos" class="video-group">
-                <!-- 远端视频将在这里添加 -->
-            </div>
+        <div id="remote-videos" class="video-group">
+            <!-- 远端视频将在这里添加 -->
         </div>
     </div>
     <script src="pub.js"></script>
 </body>
+
 </html>
