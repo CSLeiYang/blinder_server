@@ -50,7 +50,7 @@ async function init() {
 
 const commonResolutions = [
 
-    { width: 90, height: 160 }
+    { width: 90, height: 160 },
     { width: 180, height: 320 },  // 竖屏 3:4
     { width: 360, height: 640 },  // 竖屏 3:4
 
