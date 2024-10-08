@@ -283,7 +283,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 		logger.Error(err)
 		return "", err
 	}
-	recordSaver := newWebmSaver(recordFileName)
+	subRecordSaver := newWebmSaver(recordFileName)
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
@@ -296,7 +296,9 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 						return
 					}
 
-					recordSaver.PushOpus(rtpPacket)
+					subRecordSaver.mu.Lock()
+					subRecordSaver.PushOpus(rtpPacket)
+					subRecordSaver.mu.Unlock()
 					if err = confRoom.PubLocalAudioTrack.WriteRTP(rtpPacket); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 						logger.Error(err)
 						break
@@ -313,7 +315,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 			logger.Warn("peerConnection will be close")
 			delete(confRoom.SubLocalVideoTrack, userName)
 			delete(confRoom.SublocalAudioTrack, userName)
-			recordSaver.Close()
+			subRecordSaver.Close()
 			peerConnection.Close()
 		}
 	})
@@ -479,10 +481,11 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 		logger.Error(err)
 		return "", err
 	}
-	recordSaver := newWebmSaver(recordFileName)
+	pubRecordSaver := newWebmSaver(recordFileName)
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)
+
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
 			go func() {
 				defer logger.Info("pub audio track quit")
@@ -497,9 +500,9 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 						logger.Error(readErr)
 						return
 					}
-
-					recordSaver.PushOpus(rtpPacketA)
-
+					pubRecordSaver.mu.Lock()
+					pubRecordSaver.PushOpus(rtpPacketA)
+					pubRecordSaver.mu.Unlock()
 					for _, localTrack := range confRoom.SublocalAudioTrack {
 						err := localTrack.WriteRTP(rtpPacketA)
 						if err != nil && !errors.Is(err, io.EOF) {
@@ -545,7 +548,9 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 					}
 					switch codec.MimeType {
 					case webrtc.MimeTypeVP8:
-						recordSaver.PushVP8(rtpPacketV)
+						pubRecordSaver.mu.Lock()
+						pubRecordSaver.PushVP8(rtpPacketV)
+						pubRecordSaver.mu.Unlock()
 					}
 					select {
 					case snapShotChan <- rtpPacketV:
@@ -562,7 +567,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
 			peerConnection.Close()
-			// recordSaver.Close()
+			pubRecordSaver.Close()
 			delete(ConfRoomList, confRoom.Name)
 		}
 	})

@@ -40,8 +40,6 @@ func newWebmSaver(fileName string) *webmSaver {
 
 func (s *webmSaver) Close() {
 	logger.Info("Finalizing webm..")
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	if s.audioWriter != nil {
 		if err := s.audioWriter.Close(); err != nil {
 			logger.Error(err)
@@ -65,9 +63,7 @@ func (s *webmSaver) PushOpus(rtpPacket *rtp.Packet) {
 		}
 		if s.audioWriter != nil {
 			s.audioTimestamp += sample.Duration
-			s.mu.Lock()
 			_, err := s.audioWriter.Write(true, int64(s.audioTimestamp/time.Millisecond), sample.Data)
-			s.mu.Unlock()
 			if err != nil {
 				logger.Error(err)
 				return
@@ -97,9 +93,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 			}
 
 			if s.videoWriter == nil || s.audioWriter == nil || (s.width != width || s.height != height) {
-				s.mu.Lock()
 				s.InitWriter(s.filenName, false, width, height)
-				s.mu.Unlock()
 			}
 			s.width = width
 			s.height = height
@@ -110,9 +104,7 @@ func (s *webmSaver) PushVP8(rtpPacket *rtp.Packet) {
 
 		if s.videoWriter != nil {
 			s.videoTimestamp += sample.Duration
-			s.mu.Lock()
 			_, err := s.videoWriter.Write(videoKeyframe, int64(s.videoTimestamp/time.Millisecond), sample.Data)
-			s.mu.Unlock()
 			if err != nil {
 				logger.Error(err)
 				return
