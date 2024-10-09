@@ -198,7 +198,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			}
 
 			cmdDetail := msg["cmdDetail"].(string)
-			go FFmpegFileToRTPPackets(fmt.Sprintf("%s.ogg", cmdDetail), joinRoom)
+			go FFmpegFileToRTPPackets(fmt.Sprintf("audio/%s.ogg", cmdDetail), joinRoom)
 
 		default:
 			logger.Errorf("invalid msgCmd: %s, msg:%v", msgCmd, msg)
