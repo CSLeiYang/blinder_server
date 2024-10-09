@@ -30,9 +30,12 @@ type ConfRoom struct {
 	PubRemoteVideoTrack *webrtc.TrackRemote
 	PubRemoteAudioTrack *webrtc.TrackRemote
 	PubLocalAudioTrack  *webrtc.TrackLocalStaticRTP
+	PubLocalAudioChan   chan *rtp.Packet
 	SubLocalVideoTrack  map[string]*webrtc.TrackLocalStaticRTP
 	SublocalAudioTrack  map[string]*webrtc.TrackLocalStaticRTP
 	CreatedAt           time.Time
+	PubQuit             bool
+	IsPlayingFile       bool
 }
 
 type ConfInfo struct {
@@ -55,7 +58,6 @@ func main() {
 	http.HandleFunc("/ws", HandleWebSocket)
 	fs := http.FileServer(http.Dir("./web"))
 	http.Handle("/", fs)
-	http.HandleFunc("/api/conf", HandlePostConf)        // New POST endpoint
 	http.HandleFunc("/api/confInfo", HandleGetConfInfo) // 新增的 GET endpoint
 
 	// 启动 HTTP 服务器
@@ -101,67 +103,6 @@ func HandleGetConfInfo(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(confRooms)
-}
-
-// HandlePostConf processes HTTP POST requests for creating or joining a conference room.
-func HandlePostConf(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var msg map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
-	msgCmd := msg["cmd"].(string)
-
-	switch msgCmd {
-	case "create":
-		roomName := msg["roomName"].(string)
-		if len(roomName) == 0 {
-			http.Error(w, "Invalid room name", http.StatusBadRequest)
-			return
-		}
-		createdRoom, err := CreateConfRoom(roomName)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		answerSdp, err := HandlePubOffer(msg["sdp"].(string), createdRoom)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		jsonData, _ := json.Marshal(map[string]string{"answer": answerSdp, "type": "answer"})
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonData)
-
-	case "join":
-		roomName := msg["roomName"].(string)
-		if len(roomName) == 0 {
-			http.Error(w, "Invalid room name", http.StatusBadRequest)
-			return
-		}
-		joinRoom, exists := ConfRoomList[roomName]
-		if !exists {
-			http.Error(w, "Room does not exist", http.StatusNotFound)
-			return
-		}
-		answerSdp, err := HandleSubOffer(msg["userId"].(string), msg["sdp"].(string), joinRoom)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		jsonData, _ := json.Marshal(map[string]string{"answer": answerSdp, "type": "answer"})
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonData)
-
-	default:
-		http.Error(w, "Invalid command", http.StatusBadRequest)
-	}
 }
 
 func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -244,6 +185,20 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 				logger.Error(err)
 				continue
 			}
+		case "control":
+			roomName := msg["roomName"].(string)
+			if len(roomName) == 0 {
+				http.Error(w, "Invalid room name", http.StatusBadRequest)
+				return
+			}
+			joinRoom, exists := ConfRoomList[roomName]
+			if !exists {
+				http.Error(w, "Room does not exist", http.StatusNotFound)
+				return
+			}
+
+			cmdDetail := msg["cmdDetail"].(string)
+			go FFmpegFileToRTPPackets(fmt.Sprintf("%s.ogg", cmdDetail), joinRoom)
 
 		default:
 			logger.Errorf("invalid msgCmd: %s, msg:%v", msgCmd, msg)
@@ -279,13 +234,12 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 	}
 
 	recordFileName := fmt.Sprintf("%s/%s_sub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-	if err != nil {
-		logger.Error(err)
-		return "", err
-	}
+
 	subRecordSaver := newWebmSaver(recordFileName)
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
+			logger.Infof("sub remoteTrack codec MimeType: %v, ClockRate:%v, channels:%v ", remoteTrack.Codec().MimeType, remoteTrack.Codec().ClockRate, remoteTrack.Codec().Channels)
+
 			go func() {
 				logger.Info("Sub Audio Track")
 				defer logger.Info("Sub Audio Track end.")
@@ -295,15 +249,23 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 						logger.Error(readErr)
 						return
 					}
+					// logger.Infof("Sub audio len:%v, header:%v", len(rtpPacket.Payload), rtpPacket.Header)
 
 					subRecordSaver.mu.Lock()
 					subRecordSaver.PushOpus(rtpPacket)
 					subRecordSaver.mu.Unlock()
-					if err = confRoom.PubLocalAudioTrack.WriteRTP(rtpPacket); err != nil && !errors.Is(err, io.ErrClosedPipe) {
-						logger.Error(err)
-						break
-					}
 
+					if confRoom.PubQuit {
+						logger.Warn("pub quit,so peerConnection will be close")
+						return
+					}
+					if !confRoom.IsPlayingFile {
+						select {
+						case confRoom.PubLocalAudioChan <- rtpPacket:
+						default:
+
+						}
+					}
 				}
 			}()
 
@@ -477,16 +439,14 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	confRoom.PubLocalAudioTrack = localAudioTrack
 
 	recordFileName := fmt.Sprintf("%s/%s_pub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
-	if err != nil {
-		logger.Error(err)
-		return "", err
-	}
 	pubRecordSaver := newWebmSaver(recordFileName)
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
 		logger.Info("OnTrack comming....", remoteTrack)
 
 		if remoteTrack.Kind() == webrtc.RTPCodecTypeAudio {
+			logger.Infof("remoteTrack codec MimeType: %v, ClockRate:%v, channels:%v ", remoteTrack.Codec().MimeType, remoteTrack.Codec().ClockRate, remoteTrack.Codec().Channels)
+			go PubLocalAudioWrite(confRoom.PubLocalAudioChan, confRoom, uint8(remoteTrack.Codec().PayloadType))
 			go func() {
 				defer logger.Info("pub audio track quit")
 				logger.Info("pub auido track")
@@ -566,8 +526,10 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
+			confRoom.PubQuit = true
 			peerConnection.Close()
 			pubRecordSaver.Close()
+			close(confRoom.PubLocalAudioChan)
 			delete(ConfRoomList, confRoom.Name)
 		}
 	})
@@ -642,12 +604,33 @@ func CreateConfRoom(name string) (*ConfRoom, error) {
 		SubLocalVideoTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
 		SublocalAudioTrack: make(map[string]*webrtc.TrackLocalStaticRTP, 0),
 		CreatedAt:          time.Now(), // 记录创建时间
-
+		PubLocalAudioChan:  make(chan *rtp.Packet),
+		PubQuit:            false,
+		IsPlayingFile:      false,
 	}
 
 	ConfRoomList[name] = newRoom
-
 	logger.Info("CreateConfRoom end")
-
 	return newRoom, nil
+}
+
+func PubLocalAudioWrite(rtpChan chan *rtp.Packet, confRoom *ConfRoom, payloadType uint8) {
+	var localSeqNum uint16 = 0
+	logger.Info("PubLocalAudioWrite loop...")
+	defer logger.Info("PubLocalAudioWrite loop end.")
+	for rtpPackage := range rtpChan {
+		rtpPackage.Header.SequenceNumber = localSeqNum
+		rtpPackage.Header.PayloadType = payloadType
+		localSeqNum++
+		if localSeqNum == 0 {
+			localSeqNum = 1 // 避免序列号溢出后变为0
+		}
+		// logger.Info(rtpPackage)
+		err := confRoom.PubLocalAudioTrack.WriteRTP(rtpPackage)
+		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			logger.Errorf("Sub audio write error: %v", err)
+			break
+		}
+	}
+
 }

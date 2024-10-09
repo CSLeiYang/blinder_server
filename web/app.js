@@ -19,14 +19,9 @@ let localStream;
 let peerConnection;
 let isMuted = false;
 let isVideoStopped = false;
-
+let confName;
+let ws;
 async function joinSession(confName) {
-    const name = confName
-    if (!name) {
-        alert('Please enter your name');
-        return;
-    }
-
     document.getElementById('join-screen').style.display = 'none';
     document.getElementById('participant-view').style.display = 'block';
 
@@ -37,7 +32,7 @@ async function joinSession(confName) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-    const ws = new WebSocket(`wss://${window.location.host}/ws`);
+    ws = new WebSocket(`wss://${window.location.host}/ws`);
     ws.onopen = async () => {
         console.log('Connected to the signaling server');
 
@@ -49,7 +44,7 @@ async function joinSession(confName) {
             userId: '123456',
             sdp: btoa(JSON.stringify(offer)),
             cmd: 'join',
-            roomName: name
+            roomName: confName
         }));
     };
 
@@ -122,6 +117,7 @@ async function getConfInfo() {
             // 添加点击事件
             link.onclick = (e) => {
                 e.preventDefault(); // 防止默认行为
+                confName = room.name
                 joinSession(room.name); // 调用 joinRoom 函数
             };
 
@@ -151,9 +147,10 @@ function toggleMute() {
 function sendControlCommand(command) {
     if (ws && ws.readyState === WebSocket.OPEN) {
         const message = JSON.stringify({
-            type: 'control',
-            command: command,
-            userId: '123456' // 你可以根据实际情况替换为实际的用户ID
+            cmd: 'control',
+            cmdDetail: command,
+            userId: '123456', // 你可以根据实际情况替换为实际的用户ID
+            roomName: confName
         });
         ws.send(message);
         console.log(`Sent control command: ${command}`);
