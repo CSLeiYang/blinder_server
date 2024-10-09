@@ -5,7 +5,7 @@ document.getElementById('confInfoBtn').addEventListener('click', getConfInfo);
 document.getElementById('up-btn').addEventListener('click', () => sendControlCommand('zhi_xing'));
 document.getElementById('down-btn').addEventListener('click', () => sendControlCommand('hou_zhuan'));
 document.getElementById('left-btn').addEventListener('click', () => sendControlCommand('zuo-zhuan'));
-document.getElementById('right-btn').addEventListener('click', () => sendControlCommand('you-zhuan'));
+document.getElementById('right-btn').addEventListener('click', () => sendControlCommand('you_zhuan'));
 document.getElementById('up-left-btn').addEventListener('click', () => sendControlCommand('zuo_yi_dian'));
 document.getElementById('up-right-btn').addEventListener('click', () => sendControlCommand('you_yi_dian'));
 document.getElementById('down-left-btn').addEventListener('click', () => sendControlCommand('zuo_hou'));
