@@ -2,17 +2,55 @@ document.getElementById('mute-btn').addEventListener('click', toggleMute);
 document.getElementById('confInfoBtn').addEventListener('click', getConfInfo);
 
 // 添加控制杆按钮的事件监听器
-document.getElementById('up-btn').addEventListener('click', () => sendControlCommand('forward'));
-document.getElementById('down-btn').addEventListener('click', () => sendControlCommand('backward'));
-document.getElementById('left-btn').addEventListener('click', () => sendControlCommand('left'));
-document.getElementById('right-btn').addEventListener('click', () => sendControlCommand('right'));
-document.getElementById('up-left-btn').addEventListener('click', () => sendControlCommand('forwardLeft'));
-document.getElementById('up-right-btn').addEventListener('click', () => sendControlCommand('forwardRight'));
-document.getElementById('down-left-btn').addEventListener('click', () => sendControlCommand('backwardLeft'));
-document.getElementById('down-right-btn').addEventListener('click', () => sendControlCommand('backwardRight'));
+document.getElementById('up-btn').addEventListener('click', () => sendControlCommand('zhi_xing'));
+document.getElementById('down-btn').addEventListener('click', () => sendControlCommand('hou_zhuan'));
+document.getElementById('left-btn').addEventListener('click', () => sendControlCommand('zuo-zhuan'));
+document.getElementById('right-btn').addEventListener('click', () => sendControlCommand('you-zhuan'));
+document.getElementById('up-left-btn').addEventListener('click', () => sendControlCommand('zuo_yi_dian'));
+document.getElementById('up-right-btn').addEventListener('click', () => sendControlCommand('you_yi_dian'));
+document.getElementById('down-left-btn').addEventListener('click', () => sendControlCommand('zuo_hou'));
+document.getElementById('down-right-btn').addEventListener('click', () => sendControlCommand('you_hou'));
 
 // 添加紧急停止按钮的事件监听器
-document.getElementById('emergency-stop-btn').addEventListener('click', () => sendControlCommand('emergencyStop'));
+document.getElementById('emergency-stop-btn').addEventListener('click', () => sendControlCommand('ting'));
+
+
+// 监听键盘事件以支持快捷键
+document.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'ArrowUp':
+        case 'w':
+            sendControlCommand('zhi_xing');
+            break;
+        case 'ArrowDown':
+        case 's':
+            sendControlCommand('hou_zhuan');
+            break;
+        case 'ArrowLeft':
+        case 'a':
+            sendControlCommand('zuo_zhuan');
+            break;
+        case 'ArrowRight':
+        case 'd':
+            sendControlCommand('you_zhuan');
+            break;
+        case 'q': // 假设 q 键代表左上方向
+            sendControlCommand('zuo_yi_dian');
+            break;
+        case 'e': // 假设 e 键代表右上方向
+            sendControlCommand('you_yi_dian');
+            break;
+        case 'z': // 假设 z 键代表左下方向
+            sendControlCommand('zuo_hou');
+            break;
+        case 'c': // 假设 c 键代表右下方向
+            sendControlCommand('you_hou');
+            break;
+        case ' ': // 空格键作为紧急停止
+            sendControlCommand('ting');
+            break;
+    }
+});
 
 
 let localStream;
@@ -23,7 +61,7 @@ let confName;
 let ws;
 async function joinSession(confName) {
     document.getElementById('join-screen').style.display = 'none';
-    document.getElementById('participant-view').style.display = 'block';
+    document.getElementById('participant-view').style.display = 'flex';
 
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]

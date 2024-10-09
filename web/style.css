@@ -11,6 +11,9 @@ body {
 
 #participant-view {
     margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #videos {
@@ -44,8 +47,8 @@ body {
 
 #joystick-controls button {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 50px;
+    height: 50px;
     border: none;
     border-radius: 50%;
     background-color: #4CAF50;
@@ -109,10 +112,10 @@ body {
 
 #joystick-controls #emergency-stop-btn {
     position: absolute;
-    bottom: -40px;
+    bottom: -60px;
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
+    width: 200px;
     height: 40px;
     border-radius: 20px;
     background-color: #FF4136;
