@@ -4,7 +4,7 @@ document.getElementById('confInfoBtn').addEventListener('click', getConfInfo);
 // 添加控制杆按钮的事件监听器
 document.getElementById('up-btn').addEventListener('click', () => sendControlCommand('zhi_xing'));
 document.getElementById('down-btn').addEventListener('click', () => sendControlCommand('hou_zhuan'));
-document.getElementById('left-btn').addEventListener('click', () => sendControlCommand('zuo-zhuan'));
+document.getElementById('left-btn').addEventListener('click', () => sendControlCommand('zuo_zhuan'));
 document.getElementById('right-btn').addEventListener('click', () => sendControlCommand('you_zhuan'));
 document.getElementById('up-left-btn').addEventListener('click', () => sendControlCommand('zuo_yi_dian'));
 document.getElementById('up-right-btn').addEventListener('click', () => sendControlCommand('you_yi_dian'));
