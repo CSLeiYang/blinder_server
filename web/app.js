@@ -200,3 +200,86 @@ function sendControlCommand(command) {
 
 getConfInfo()
 
+
+/*自动导航*/
+let localWs; // 用于连接本地 WebSocket
+let frameInterval; // 用于存储 setInterval 的引用
+let isConnected = false; // 用于跟踪 WebSocket 连接状态
+const localWsUrl = "ws://127.0.0.1:19999"
+
+// Function to display event messages and log them to the console
+function displayEventMessage(message) {
+    const eventLog = document.getElementById('event-log');
+    const messageElement = document.createElement('div');
+    const timestamp = new Date().toLocaleTimeString();
+
+    // Format message
+    const formattedMessage = `${timestamp}: ${message}`;
+    messageElement.textContent = formattedMessage;
+    eventLog.appendChild(messageElement);
+
+    // Scroll to the bottom of the event log
+    eventLog.scrollTop = eventLog.scrollHeight;
+
+    // Log to console
+    console.log(formattedMessage);
+}
+
+// Updated WebSocket event handling
+document.getElementById('connect-local-ws-btn').addEventListener('click', async () => {
+    if (isConnected) {
+        // 如果已经连接，则断开连接
+        displayEventMessage('Disconnecting from local WebSocket server...');
+        clearInterval(frameInterval); // 停止发送帧
+        localWs.close(); // 关闭 WebSocket
+        isConnected = false; // 更新连接状态
+        return;
+    }
+
+    try {
+        localWs = new WebSocket(localWsUrl); // 替换 your_port_here 为实际端口
+
+        localWs.onopen = () => {
+            displayEventMessage(`Connected to ${localWsUrl}`);
+            isConnected = true; // 更新连接状态
+            frameInterval = setInterval(sendVideoFrame, 30); // 每 30 毫秒发送一次帧
+        };
+
+        localWs.onmessage = (event) => {
+            displayEventMessage(`Received from local WS: ${event.data}`);
+        };
+
+        localWs.onerror = (error) => {
+            displayEventMessage(`WebSocket Error:${error.message}`);
+        };
+
+        localWs.onclose = () => {
+            displayEventMessage('WebSocket connection closed');
+            clearInterval(frameInterval); // 清除定时器
+            isConnected = false; // 更新连接状态
+        };
+    } catch (error) {
+        displayEventMessage(`Failed to connect to ${localWsUrl}, err: ${error.message} `);
+    }
+});
+
+async function sendVideoFrame() {
+    if (peerConnection && localWs && localWs.readyState === WebSocket.OPEN) {
+        const remoteVideo = document.querySelector('remoteVideos'); // 根据实际情况获取远端视频元素
+        if (!remoteVideo) return; // 如果没有视频元素，直接返回
+
+        const canvas = document.createElement('canvas');
+        canvas.width = remoteVideo.videoWidth;
+        canvas.height = remoteVideo.videoHeight;
+
+        const context = canvas.getContext('2d');
+        context.drawImage(remoteVideo, 0, 0, canvas.width, canvas.height);
+        const frameData = canvas.toDataURL('image/jpeg'); // 以 JPEG 格式获取视频帧
+
+        localWs.send(frameData); // 发送视频帧数据
+        console.log('Sent video frame to local WS');
+    }
+}
+
+/*自动导航 end*/
+
