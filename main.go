@@ -69,8 +69,8 @@ func main() {
 	// 启动 HTTPS 服务器
 	go func() {
 		log.Printf("Starting HTTPS server at %s\n", httpsPort)
-		certFile := "./blinder.aiiyou.cn/fullchain.pem" // 替换为你的证书路径
-		keyFile := "./blinder.aiiyou.cn/privkey.pem"    // 替换为你的私钥路径
+		certFile := "./blinder.aiiyou.cn/aliyun/blinder.aiiyou.cn.pem" // 替换为你的证书路径
+		keyFile := "./blinder.aiiyou.cn/aliyun/blinder.aiiyou.cn.key"  // 替换为你的私钥路径
 		tlsConfig := &tls.Config{
 			MinVersion: tls.VersionTLS10,
 		}
