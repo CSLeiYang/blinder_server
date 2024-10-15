@@ -54,9 +54,9 @@ body {
 #local-video-container {
     position: relative;
     /* 改为相对定位 */
-    width: 120px;
+    width: auto;
     /* 可以根据需要调整大小 */
-    height: auto;
+    height: 100%;
     /* 保持纵横比 */
     overflow: hidden;
     border: 2px solid #ccc;
