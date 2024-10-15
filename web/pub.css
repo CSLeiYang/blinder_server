@@ -49,6 +49,7 @@ body {
     color: black; /* 文本颜色 */
     font-size: 12px; /* 根据需要调整字体大小 */
     pointer-events: none; /* 防止鼠标事件影响到视频控制 */
+}
 
 #local-video-container {
     position: relative;
