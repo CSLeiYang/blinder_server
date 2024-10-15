@@ -36,6 +36,21 @@ body {
     /* 背景颜色 */
 }
 
+#foot-placement-guide {
+    position: absolute;
+    bottom: 0; /* 位于父容器底部 */
+    left: 50%; /* 父容器水平居中 */
+    transform: translateX(-50%); /* 向左偏移自身宽度的一半 */
+    width: 25%; /* 视频宽度的1/4 */
+    height: 16.6667%; /* 视频高度的1/6 (100% / 6) */
+    background-color: rgba(255, 255, 0, 0.5); /* 黄色背景，透明度为50% */
+    text-align: center; /* 文本居中 */
+    line-height: 16.6667%; /* 使文本垂直居中 */
+    color: black; /* 文本颜色 */
+    font-size: 12px; /* 根据需要调整字体大小 */
+    pointer-events: none; /* 防止鼠标事件影响到视频控制 */
+}
+
 #local-video-container {
     position: relative;
     /* 改为相对定位 */
