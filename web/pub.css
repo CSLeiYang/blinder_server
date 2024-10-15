@@ -1,9 +1,8 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
+    /* ...其他样式... */
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    align-items: center; /* 水平居中 */
 }
 
 #join-screen {
@@ -13,7 +12,11 @@ body {
     align-items: center;
     flex-grow: 1;
     font-size: 32vh;
+    height: auto;
 
+}
+#video_layout{
+    position: relative;
 }
 
 #participant-view {
@@ -38,26 +41,24 @@ body {
 
 #foot-placement-guide {
     position: absolute;
-    bottom: 0; /* 位于视频底部 */
-    left: 50%; /* 视频水平居中 */
-    transform: translateX(-50%); /* 向左偏移自身宽度的一半 */
-    width: 25%; /* 视频宽度的1/4 */
-    height: 16.6667%; /* 视频高度的1/6 (100% / 6) */
-    background-color: rgba(255, 255, 0, 0.5); /* 黄色背景，透明度为50% */
-    text-align: center; /* 文本居中 */
-    line-height: 16.6667%; /* 使文本垂直居中 */
-    color: black; /* 文本颜色 */
-    font-size: 12px; /* 根据需要调整字体大小 */
-    pointer-events: none; /* 防止鼠标事件影响到视频控制 */
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 25%;
+    height: 12.8%;
+    background-color: rgba(0, 255, 0, 0.2);
+    display: flex; /* 使用 Flexbox */
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+    color: black;
+    font-size: 12px;
+    pointer-events: none;
 }
 
 #local-video-container {
+    text-align: center;
     position: relative;
     /* 改为相对定位 */
-    width: auto;
-    /* 可以根据需要调整大小 */
-    height: 100%;
-    /* 保持纵横比 */
     overflow: hidden;
     border: 2px solid #ccc;
     /* 可选边框 */
@@ -68,9 +69,9 @@ body {
 }
 
 #local-video {
-    width: 100%; /* 或者根据需要设置固定宽度 */
-    height: auto; /* 保持宽高比 */
-    position: relative; /* 使得内部的绝对定位元素相对于它定位 */
+    /* 保持宽高比 */
+    position: relative;
+    /* 使得内部的绝对定位元素相对于它定位 */
 }
 
 #controls {
