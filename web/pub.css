@@ -2,7 +2,8 @@ body {
     /* ...其他样式... */
     display: flex;
     flex-direction: column;
-    align-items: center; /* 水平居中 */
+    align-items: center;
+    /* 水平居中 */
 }
 
 #join-screen {
@@ -15,12 +16,13 @@ body {
     height: auto;
 
 }
-#video_layout{
+
+#video_layout {
     position: relative;
 }
 
-#videoSource{
-    margin: 10px;
+#videoSource {
+    margin: 30px;
 }
 
 #participant-view {
@@ -43,6 +45,10 @@ body {
     /* 背景颜色 */
 }
 
+#resolution-selection {
+    margin-bottom: 30px;
+}
+
 #foot-placement-guide {
     position: absolute;
     bottom: 0;
@@ -51,9 +57,12 @@ body {
     width: 25%;
     height: 12.8%;
     background-color: rgba(0, 255, 0, 0.2);
-    display: flex; /* 使用 Flexbox */
-    justify-content: center; /* 水平居中 */
-    align-items: center; /* 垂直居中 */
+    display: flex;
+    /* 使用 Flexbox */
+    justify-content: center;
+    /* 水平居中 */
+    align-items: center;
+    /* 垂直居中 */
     color: black;
     font-size: 12px;
     pointer-events: none;
