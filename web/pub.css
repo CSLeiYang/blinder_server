@@ -19,6 +19,10 @@ body {
     position: relative;
 }
 
+#videoSource{
+    margin: 10px;
+}
+
 #participant-view {
     display: flex;
     flex-direction: column;
