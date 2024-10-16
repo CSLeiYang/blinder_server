@@ -2,6 +2,7 @@ document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 document.getElementById('video-btn').addEventListener('click', toggleVideo);
 document.getElementById('output-btn').addEventListener('click', toggleAudioOutput); // 绑定切换按钮
+const videoSelect = document.querySelector('select#videoSource');
 
 let localStream;
 let peerConnection;
@@ -14,6 +15,25 @@ let mediaStreamDestination = audioContext.createMediaStreamDestination(); // 创
 
 // 保存会议名称
 let confName;
+
+
+function gotDevices(deviceInfos) {
+    // Handles being called several times to update labels. Preserve values.
+    while (videoSelect.firstChild) {
+        videoSelect.removeChild(videoSelect.firstChild);
+    }
+    for (let i = 0; i !== deviceInfos.length; ++i) {
+        const deviceInfo = deviceInfos[i];
+        const option = document.createElement('option');
+        option.value = deviceInfo.deviceId;
+        if (deviceInfo.kind === 'videoinput') {
+            option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+            videoSelect.appendChild(option);
+        }
+    }
+}
+
+navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(displayMessage);
 
 // 创建一个用于显示错误信息的元素
 const errorDisplay = document.getElementById('error-display');
@@ -45,9 +65,10 @@ async function updateLocalStream() {
     const [width, height] = resolution.map(Number);
     try {
         stopLocalStream(localStream);
+
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: 'environment' },
+                facingMode: { ideal: videoSelect.value },
                 width: { ideal: width },
                 height: { ideal: height },
                 frameRate: { ideal: 30 },
