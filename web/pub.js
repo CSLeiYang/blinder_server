@@ -2,6 +2,7 @@ document.getElementById('join-btn').addEventListener('click', joinSession);
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 document.getElementById('video-btn').addEventListener('click', toggleVideo);
 document.getElementById('output-btn').addEventListener('click', toggleAudioOutput); // 绑定切换按钮
+document.getElementById('videoSource').addEventListener('change', updateLocalStream); // 绑定切换按钮
 const videoSelect = document.querySelector('select#videoSource');
 
 let localStream;
@@ -63,12 +64,13 @@ function stopLocalStream(localStream) {
 async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
     const [width, height] = resolution.map(Number);
+    const camDevice = videoSelect.value
     try {
         stopLocalStream(localStream);
 
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: videoSelect.value },
+                facingMode: { ideal: camDevice },
                 width: { ideal: width },
                 height: { ideal: height },
                 frameRate: { ideal: 30 },
