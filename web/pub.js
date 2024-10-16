@@ -19,20 +19,53 @@ let confName;
 
 
 function gotDevices(deviceInfos) {
-    // Handles being called several times to update labels. Preserve values.
+    // 清除现有的选项
     while (videoSelect.firstChild) {
         videoSelect.removeChild(videoSelect.firstChild);
     }
+
+    let defaultVideoDeviceId = null;
+    let rearCameraOption = null;
+
     for (let i = 0; i !== deviceInfos.length; ++i) {
         const deviceInfo = deviceInfos[i];
-        const option = document.createElement('option');
-        option.value = deviceInfo.deviceId;
         if (deviceInfo.kind === 'videoinput') {
+            const option = document.createElement('option');
+            option.value = deviceInfo.deviceId;
             option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+            
+            // 检查是否是后置摄像头
+            if (deviceInfo.label && deviceInfo.label.toLowerCase().includes('rear')) {
+                option.selected = true;
+                rearCameraOption = option;
+            }
+
             videoSelect.appendChild(option);
+
+            // 如果还没有找到默认摄像头，尝试设置第一个摄像头为默认
+            if (!defaultVideoDeviceId) {
+                defaultVideoDeviceId = deviceInfo.deviceId;
+            }
         }
     }
+
+    // 如果没有找到明确的后置摄像头标签，但有多个摄像头，选择第二个作为后置摄像头
+    if (!rearCameraOption && videoSelect.options.length > 1) {
+        videoSelect.options[1].selected = true;
+    }
 }
+
+function getRearCameraId() {
+    const options = videoSelect.options;
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].text.toLowerCase().includes('rear')) {
+            return options[i].value;
+        }
+    }
+    // 如果没有找到明确的后置摄像头标签，返回第二个摄像头
+    return options.length > 1 ? options[1].value : options[0]?.value;
+}
+
 
 navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(displayMessage);
 
@@ -64,14 +97,15 @@ function stopLocalStream(localStream) {
 async function updateLocalStream() {
     const resolution = document.querySelector('input[name="resolution"]:checked').value.split('x');
     const [width, height] = resolution.map(Number);
-    const camDevice = videoSelect.value
+    const camDevice = videoSelect.value || getRearCameraId(); // 使用选中的或后置摄像头
+
     try {
         stopLocalStream(localStream);
 
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: "environment" },
-                deviceId:{ideal: camDevice},
+                facingMode: { ideal: "environment" }, // 优先使用后置摄像头
+                deviceId: { exact: camDevice },
                 width: { ideal: width },
                 height: { ideal: height },
                 frameRate: { ideal: 30 },
