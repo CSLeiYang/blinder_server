@@ -70,7 +70,8 @@ async function updateLocalStream() {
 
         localStream = await navigator.mediaDevices.getUserMedia({
             video: {
-                facingMode: { ideal: camDevice },
+                facingMode: { ideal: "environment" },
+                deviceId:{ideal: camDevice},
                 width: { ideal: width },
                 height: { ideal: height },
                 frameRate: { ideal: 30 },
