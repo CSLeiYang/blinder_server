@@ -242,7 +242,7 @@ document.getElementById('connect-local-ws-btn').addEventListener('click', async 
         localWs.onopen = () => {
             displayEventMessage(`Connected to ${localWsUrl}`);
             isConnected = true; // 更新连接状态
-            frameInterval = setInterval(sendVideoFrame, 30); // 每 30 毫秒发送一次帧
+            frameInterval = setInterval(sendVideoFrame, 33); // 每 30 毫秒发送一次帧
         };
 
         localWs.onmessage = (event) => {
@@ -281,7 +281,7 @@ document.getElementById('connect-local-ws-btn').addEventListener('click', async 
 
 async function sendVideoFrame() {
     if (peerConnection && localWs && localWs.readyState === WebSocket.OPEN) {
-        const remoteVideo = document.querySelector('remoteVideos'); // 根据实际情况获取远端视频元素
+        const remoteVideo = document.querySelector('#remoteVideos video'); // 根据实际情况获取远端视频元素
         if (!remoteVideo) return; // 如果没有视频元素，直接返回
 
         const canvas = document.createElement('canvas');
