@@ -234,7 +234,7 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 	}
 
 	today := time.Now().Format("2006-01-02")
-	os.MkdirAll(fmt.Sprintf("%s/%s", recordPath, today),os.ModePerm)
+	os.MkdirAll(fmt.Sprintf("%s/%s", recordPath, today), os.ModePerm)
 	recordFileName := fmt.Sprintf("%s/%s/%s_sub_%v", recordPath, today, confRoom.Name, confRoom.CreatedAt.Format("15_04_05"))
 
 	subRecordSaver := newWebmSaver(recordFileName)
@@ -440,7 +440,9 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 
 	confRoom.PubLocalAudioTrack = localAudioTrack
 
-	recordFileName := fmt.Sprintf("%s/%s_pub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	today := time.Now().Format("2006-01-02")
+	os.MkdirAll(fmt.Sprintf("%s/%s", recordPath, today), os.ModePerm)
+	recordFileName := fmt.Sprintf("%s/%s/%s_pub_%v", recordPath, today, confRoom.Name, confRoom.CreatedAt.Format("15_04_05"))
 	pubRecordSaver := newWebmSaver(recordFileName)
 
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) { //nolint: revive
