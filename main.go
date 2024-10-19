@@ -531,6 +531,7 @@ func HandlePubOffer(offer string, confRoom *ConfRoom) (string, error) {
 	peerConnection.OnICEConnectionStateChange(func(is webrtc.ICEConnectionState) {
 		if is == webrtc.ICEConnectionStateFailed || is == webrtc.ICEConnectionStateDisconnected || is == webrtc.ICEConnectionStateClosed {
 			confRoom.PubQuit = true
+			time.Sleep(10*time.Microsecond)
 			peerConnection.Close()
 			pubRecordSaver.Close()
 			close(confRoom.PubLocalAudioChan)
