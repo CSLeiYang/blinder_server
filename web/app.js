@@ -247,22 +247,36 @@ document.getElementById('connect-local-ws-btn').addEventListener('click', async 
 
         localWs.onmessage = (event) => {
             displayEventMessage(`Received from local WS: ${event.data}`);
-            autoNavData = JSON.parse(event.data)
+            autoNavData = JSON.parse(event.data);
+
             switch (autoNavData['Direction']) {
                 case "l":
-                    sendControlCommand("zuo")
+                    sendControlCommand("zuo");
                     break;
                 case "r":
-                    sendControlCommand("you")
+                    sendControlCommand("you");
                     break;
                 case "g":
-                    sendControlCommand("zhixing")
+                    sendControlCommand("zhixing");
                     break;
                 case "m":
-                    sendControlCommand("man")
+                    sendControlCommand("man");
                     break;
                 default:
                     break;
+            }
+
+            if (autoNavData["labelCount"]) {
+                const labelCount = autoNavData["labelCount"];
+                document.getElementById('labelCount').textContent = labelCount;
+
+                if (labelCount > 5) {
+                    document.getElementById("labelCount").style.color = "red";
+                } else {
+                    document.getElementById("labelCount").style.color = "black"; // Or any default color
+                }
+            } else {
+                document.getElementById('labelCount').textContent = "";
             }
         };
 
