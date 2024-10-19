@@ -136,7 +136,7 @@ async function joinSession(confName) {
 
 async function getConfInfo() {
     try {
-        const response = await fetch('https://blinder.aiiyou.cn:9443/api/confInfo');
+        const response = await fetch(`https://${window.location.host}/api/confInfo`);
         if (!response.ok) {
             throw new Error('Network response was not ok ' + response.statusText);
         }
