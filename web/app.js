@@ -293,7 +293,7 @@ async function sendVideoFrame() {
         context.drawImage(remoteVideo, 0, 0, canvas.width, canvas.height);
         const frameData = canvas.toDataURL('image/jpeg'); // 以 JPEG 格式获取视频帧
 
-        localWs.send(json.stringify({"frame":frameData})); // 发送视频帧数据
+        localWs.send(JSON.stringify({"frame":frameData})); // 发送视频帧数据
         console.log('Sent video frame to local WS');
     }
 }
