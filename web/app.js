@@ -247,6 +247,22 @@ document.getElementById('connect-local-ws-btn').addEventListener('click', async 
 
         localWs.onmessage = (event) => {
             displayEventMessage(`Received from local WS: ${event.data}`);
+            switch (event.data) {
+                case "l":
+                    sendControlCommand("zuo")
+                    break;
+                case "r":
+                    sendControlCommand("you")
+                    break;
+                case "g":
+                    sendControlCommand("zhixing")
+                    break;
+                case "m":
+                    sendControlCommand("man")
+                    break;
+                default:
+                    break;
+            }
         };
 
         localWs.onerror = (error) => {
