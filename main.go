@@ -233,7 +233,9 @@ func HandleSubOffer(userName string, offer string, confRoom *ConfRoom) (string, 
 		return "", err
 	}
 
-	recordFileName := fmt.Sprintf("%s/%s_sub_%v", recordPath, confRoom.Name, confRoom.CreatedAt.Format("2006-01-02-15_04_05"))
+	today := time.Now().Format("2006-01-02")
+	os.MkdirAll(fmt.Sprintf("%s/%s", recordPath, today),os.ModePerm)
+	recordFileName := fmt.Sprintf("%s/%s/%s_sub_%v", recordPath, today, confRoom.Name, confRoom.CreatedAt.Format("15_04_05"))
 
 	subRecordSaver := newWebmSaver(recordFileName)
 	peerConnection.OnTrack(func(remoteTrack *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
