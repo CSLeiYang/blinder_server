@@ -247,7 +247,7 @@ document.getElementById('connect-local-ws-btn').addEventListener('click', async 
 
         localWs.onmessage = (event) => {
             displayEventMessage(`Received from local WS: ${event.data}`);
-            autoNavData = json.parse(event.data)
+            autoNavData = JSON.parse(event.data)
             switch (autoNavData['Direction']) {
                 case "l":
                     sendControlCommand("zuo")
